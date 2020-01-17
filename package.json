@@ -1,0 +1,27 @@
+{
+  "name": "terd",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "watch": "webpack --watch",
+    "build": "webpack --config webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Luncert/Terd.git"
+  },
+  "author": "Luncert",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Luncert/Terd/issues"
+  },
+  "homepage": "https://github.com/Luncert/Terd#readme",
+  "devDependencies": {
+    "@types/node": "^13.1.8",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.5",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  }
+}
