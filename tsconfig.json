@@ -14,6 +14,7 @@
         "noUnusedParameters": false,
         "experimentalDecorators": true,
         "skipLibCheck": true,
+        "resolveJsonModule": true
     },
     "include": [
         "src"

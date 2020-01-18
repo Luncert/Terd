@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     mode: 'development',
@@ -15,9 +16,18 @@ module.exports = {
             use: "ts-loader"
         }]
     },
+    plugins: [
+        new CopyWebpackPlugin([{
+            from: './res',
+            to: path.resolve(__dirname, 'dist')
+        }])
+    ],
     resolve: {
         extensions: [
-            '.ts'
+            '.ts', '.js'
         ]
+    },
+    node: {
+        __dirname: false
     }
 };

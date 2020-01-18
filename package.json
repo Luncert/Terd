@@ -17,12 +17,16 @@
   "bugs": {
     "url": "https://github.com/Luncert/Terd/issues"
   },
-  "homepage": "https://github.com/Luncert/Terd#readme",
+  "homepage": "https://github.com/Luncert/Terd",
   "devDependencies": {
     "@types/node": "^13.1.8",
+    "copy-webpack-plugin": "^5.1.1",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.5",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "chalk": "^3.0.0"
   }
 }
