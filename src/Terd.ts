@@ -31,13 +31,22 @@ export class UserInterface {
 
     start() {
         process.stdin.on('data', (data) => {
-            console.log(data)
+            this.write(data)
+            this.write(this.prompt)
         })
         process.on('SIGINT', () => {
-            this.write('\r\nExit')
+            this.write('\x1b[0m\r\n')
             process.exit()
         })
-        this.write('Terd>')
+        this.write(this.prompt)
+    }
+
+    get prompt() {
+        let cwd = process.cwd()
+        let i = cwd.indexOf(':')
+        let disk = cwd.substring(0, i)
+        let workPath = cwd.substring(i +  1).replace(/\\/g, '/')
+        return '\x1b[42m' +  disk + ' \x1b[44m' + workPath + '\x1b[40m\x1b[37m '
     }
 
     write(buffer: Uint8Array | string, cb?: (err?: Error) => void): boolean {
