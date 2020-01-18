@@ -1,4 +1,6 @@
 import process from 'process';
+import child_process from 'child_process';
+import iconv from 'iconv-lite';
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
@@ -6,12 +8,32 @@ import path from 'path';
 const PackageInfo = require('../package.json');
 
 type DataHandler = (data: Uint8Array | string) => void
+type CloseListener = () => void
 
 class Terd {
 
     private cwd: string
     private lastSucceed: boolean = true
     private writeOutput: DataHandler
+    private proc: child_process.ChildProcessWithoutNullStreams
+
+    constructor(output: DataHandler, onClose?: CloseListener) {
+        if (!output) {
+            throw new Error('output cannot be null.');
+        }
+        this.writeOutput = output
+
+        this.proc = child_process.spawn('powershell', {
+            argv0: '-Command -',
+            shell: false,
+        })
+        this.proc.stdout.on('data', (data) => this.writeOutput(iconv.decode(data, 'gbk')))
+        this.proc.on('close', () => onClose && onClose())
+
+        process.on('SIGINT', () => this.kill())
+
+        this.writeOutput(this.getPrompt())
+    }
 
     public getPrompt(): string {
         let cwd = process.cwd().replace(/\\/g, '/')
@@ -19,24 +41,15 @@ class Terd {
     }
 
     /**
-     * bind DataHandler to consume terminal outputs
-     * @param handler DataHandler
-     */
-    public onData(handler: DataHandler) {
-        this.writeOutput = handler
-    }
-
-    public init() {
-        this.writeOutput(this.getPrompt())
-    }
-
-    /**
      * submit script to Terd to process
      * @param script string
      */
     public process(script: Buffer) {
-        this.lastSucceed = !this.lastSucceed
-        this.writeOutput(this.getPrompt())
+        this.proc.stdin.write(script)
+    }
+
+    public kill() {
+        this.proc.kill()
     }
 }
 
@@ -44,33 +57,26 @@ export class UserInterface {
 
     private terd: Terd
 
-    constructor() {
-        this.terd = new Terd()
-        process.stdin.setEncoding('utf8')
-    }
-
     start() {
         // output banner
         this.write(this.loadBanner())
 
-        // watch output
-        this.terd.onData(this.write.bind(this))
+        this.terd = new Terd(this.write.bind(this),
+            () => {
+                this.write('\r\n')
+                process.exit()
+            })
+        process.stdin.setEncoding('utf8')
+        process.stdout.setEncoding('utf8')
 
         // watch input
         process.stdin.on('data', (data) => this.terd.process(data))
-        
-        // capture SIGINT
-        process.on('SIGINT', () => {
-            this.write('\r\n')
-            process.exit()
-        })
-
-        this.terd.init()
     }
 
     loadBanner() {
         let lines = fs.readFileSync(path.resolve(__dirname, 'banner.txt')).toString().split('\r\n')
             .map((line) => chalk.greenBright(line))
+        // lines[lines.length - 4] += chalk.redBright(PackageInfo.version)
         lines[lines.length - 4] += chalk.redBright(PackageInfo.version)
         lines[lines.length - 3] += chalk.blueBright('by ' + PackageInfo.author)
         lines[lines.length - 2] += chalk.whiteBright(chalk.underline(PackageInfo.homepage))

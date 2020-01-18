@@ -19,14 +19,17 @@
   },
   "homepage": "https://github.com/Luncert/Terd",
   "devDependencies": {
+    "@types/chalk": "^2.2.0",
     "@types/node": "^13.1.8",
     "copy-webpack-plugin": "^5.1.1",
+    "node-loader": "^0.6.0",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.5",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "chalk": "^3.0.0"
+    "chalk": "^3.0.0",
+    "iconv-lite": "^0.5.1"
   }
 }

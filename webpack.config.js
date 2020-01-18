@@ -14,6 +14,9 @@ module.exports = {
         rules: [{
             test: /\.ts$/,
             use: "ts-loader"
+        }, {
+            test: /\.node$/,
+            loader: 'node-loader'
         }]
     },
     plugins: [
