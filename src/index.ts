@@ -1,4 +1,5 @@
-import { UserInterface } from './Terd'
+import TerdTerminal from "./TerdTerminal";
 
-let ui = new UserInterface()
-ui.start()
+const terd = new TerdTerminal({ printBanner: true, printPrompt: true });
+terd.on('data', (data) => process.stdout.write(data));
+terd.run();

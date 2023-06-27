@@ -6,7 +6,8 @@
   "scripts": {
     "watch": "webpack --watch",
     "build": "webpack --config webpack.config.js",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "antlr": "antlr4ts -visitor src/grammar/Terd.g4"
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/node": "^13.1.8",
+    "antlr4ts-cli": "^0.5.0-alpha.4",
     "copy-webpack-plugin": "^5.1.1",
     "node-loader": "^0.6.0",
     "ts-loader": "^6.2.1",
@@ -29,6 +31,7 @@
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
+    "antlr4ts": "^0.5.0-alpha.4",
     "chalk": "^3.0.0",
     "iconv-lite": "^0.5.1"
   }
