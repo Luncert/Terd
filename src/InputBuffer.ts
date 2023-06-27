@@ -32,7 +32,7 @@ export default class InputBuffer {
   }
 
   toString(start?: number, end?: number) {
-    return iconv.decode(Buffer.from(this.buf.slice(start, end)), 'gbk');
+    return iconv.decode(Buffer.from(this.buf.slice(start, end)), 'utf8');
   }
 
   pack() {
@@ -49,14 +49,25 @@ export default class InputBuffer {
     });
   }
 
-  push(c: number) {
+  push(c: number | Buffer) {
     this.recordChange('push', () => {
+      let cursorDelta = 1;
       if (this.insertMode && this.cursor < this.buf.length) {
-        this.buf[this.cursor] = c;
+        if (c instanceof Buffer) {
+          this.buf.splice(this.cursor, c.length, ...c);
+          cursorDelta = c.length;
+        } else {
+          this.buf[this.cursor] = c;
+        }
       } else {
-        this.buf.splice(this.cursor, 0, c);
+        if (c instanceof Buffer) {
+          this.buf.splice(this.cursor, 0, ...c);
+          cursorDelta = c.length;
+        } else {
+          this.buf.splice(this.cursor, 0, c);
+        }
       }
-      this.cursor++;
+      this.cursor += cursorDelta;
     });
   }
 
@@ -97,7 +108,7 @@ export default class InputBuffer {
         break;
       case 'push':
         if (this.insertMode) {
-          const text = String.fromCharCode(this.buf[cursorBefore]);
+          const text = this.toString(cursorBefore, this.cursor);
           echo = `${text}`;
         } else {
           const text = this.toString(cursorBefore, this.buf.length);

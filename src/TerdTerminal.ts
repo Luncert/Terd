@@ -28,9 +28,7 @@ export default class TerdTerminal extends Terd {
     if (handler) {
       handler();
     } else {
-      console.assert(keystroke.length == 1);
-      const c = keystroke[0];
-      this.inputBuffer.push(c);
+      this.inputBuffer.push(keystroke);
     }
     this.prevInput = keystroke[0];
   }
