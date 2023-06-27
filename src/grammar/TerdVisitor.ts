@@ -8,7 +8,6 @@ import { ExecutableContext } from "./TerdParser";
 import { ArgumentsContext } from "./TerdParser";
 import { ArgumentContext } from "./TerdParser";
 import { OptionContext } from "./TerdParser";
-import { OptionWithArgumentContext } from "./TerdParser";
 
 
 /**
@@ -53,12 +52,5 @@ export interface TerdVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitOption?: (ctx: OptionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by `TerdParser.optionWithArgument`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitOptionWithArgument?: (ctx: OptionWithArgumentContext) => Result;
 }
 

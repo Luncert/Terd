@@ -41,10 +41,9 @@ export class TerdParser extends Parser {
 	public static readonly RULE_arguments = 2;
 	public static readonly RULE_argument = 3;
 	public static readonly RULE_option = 4;
-	public static readonly RULE_optionWithArgument = 5;
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
-		"command", "executable", "arguments", "argument", "option", "optionWithArgument",
+		"command", "executable", "arguments", "argument", "option",
 	];
 
 	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
@@ -86,24 +85,70 @@ export class TerdParser extends Parser {
 		this.enterRule(_localctx, 0, TerdParser.RULE_command);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 12;
-			this.executable();
-			this.state = 15;
+			this.state = 29;
 			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			if (_la === TerdParser.SPACES) {
+			switch ( this.interpreter.adaptivePredict(this._input, 4, this._ctx) ) {
+			case 1:
+				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 13;
-				this.match(TerdParser.SPACES);
-				this.state = 14;
-				this.arguments();
+				this.state = 11;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				if (_la === TerdParser.SPACES) {
+					{
+					this.state = 10;
+					this.match(TerdParser.SPACES);
+					}
 				}
-			}
 
-			this.state = 17;
-			this.match(TerdParser.EOF);
+				this.state = 13;
+				this.executable();
+				this.state = 15;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				if (_la === TerdParser.SPACES) {
+					{
+					this.state = 14;
+					this.match(TerdParser.SPACES);
+					}
+				}
+
+				this.state = 17;
+				this.match(TerdParser.EOF);
+				}
+				break;
+
+			case 2:
+				this.enterOuterAlt(_localctx, 2);
+				{
+				this.state = 20;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				if (_la === TerdParser.SPACES) {
+					{
+					this.state = 19;
+					this.match(TerdParser.SPACES);
+					}
+				}
+
+				this.state = 22;
+				this.executable();
+				this.state = 25;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				if (_la === TerdParser.SPACES) {
+					{
+					this.state = 23;
+					this.match(TerdParser.SPACES);
+					this.state = 24;
+					this.arguments();
+					}
+				}
+
+				this.state = 27;
+				this.match(TerdParser.EOF);
+				}
+				break;
 			}
 		}
 		catch (re) {
@@ -127,7 +172,7 @@ export class TerdParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 19;
+			this.state = 31;
 			this.match(TerdParser.PATTERN);
 			}
 		}
@@ -153,21 +198,21 @@ export class TerdParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 21;
+			this.state = 33;
 			this.argument();
-			this.state = 26;
+			this.state = 38;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la === TerdParser.SPACES) {
 				{
 				{
-				this.state = 22;
+				this.state = 34;
 				this.match(TerdParser.SPACES);
-				this.state = 23;
+				this.state = 35;
 				this.argument();
 				}
 				}
-				this.state = 28;
+				this.state = 40;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -194,24 +239,19 @@ export class TerdParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 32;
+			this.state = 43;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case TerdParser.T__0:
-				{
-				this.state = 29;
-				this.option();
-				}
-				break;
 			case TerdParser.T__1:
 				{
-				this.state = 30;
-				this.optionWithArgument();
+				this.state = 41;
+				this.option();
 				}
 				break;
 			case TerdParser.PATTERN:
 				{
-				this.state = 31;
+				this.state = 42;
 				this.match(TerdParser.PATTERN);
 				}
 				break;
@@ -238,43 +278,23 @@ export class TerdParser extends Parser {
 	public option(): OptionContext {
 		let _localctx: OptionContext = new OptionContext(this._ctx, this.state);
 		this.enterRule(_localctx, 8, TerdParser.RULE_option);
+		let _la: number;
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 34;
-			this.match(TerdParser.T__0);
-			this.state = 35;
-			this.match(TerdParser.PATTERN);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
+			this.state = 45;
+			_la = this._input.LA(1);
+			if (!(_la === TerdParser.T__0 || _la === TerdParser.T__1)) {
+			this._errHandler.recoverInline(this);
 			} else {
-				throw re;
+				if (this._input.LA(1) === Token.EOF) {
+					this.matchedEOF = true;
+				}
+
+				this._errHandler.reportMatch(this);
+				this.consume();
 			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public optionWithArgument(): OptionWithArgumentContext {
-		let _localctx: OptionWithArgumentContext = new OptionWithArgumentContext(this._ctx, this.state);
-		this.enterRule(_localctx, 10, TerdParser.RULE_optionWithArgument);
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 37;
-			this.match(TerdParser.T__1);
-			this.state = 38;
-			this.match(TerdParser.PATTERN);
-			this.state = 39;
-			this.match(TerdParser.SPACES);
-			this.state = 40;
+			this.state = 46;
 			this.match(TerdParser.PATTERN);
 			}
 		}
@@ -294,25 +314,29 @@ export class TerdParser extends Parser {
 	}
 
 	public static readonly _serializedATN: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\n-\x04\x02\t" +
-		"\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x04\x07\t" +
-		"\x07\x03\x02\x03\x02\x03\x02\x05\x02\x12\n\x02\x03\x02\x03\x02\x03\x03" +
-		"\x03\x03\x03\x04\x03\x04\x03\x04\x07\x04\x1B\n\x04\f\x04\x0E\x04\x1E\v" +
-		"\x04\x03\x05\x03\x05\x03\x05\x05\x05#\n\x05\x03\x06\x03\x06\x03\x06\x03" +
-		"\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x02\x02\x02\b\x02\x02\x04" +
-		"\x02\x06\x02\b\x02\n\x02\f\x02\x02\x02\x02*\x02\x0E\x03\x02\x02\x02\x04" +
-		"\x15\x03\x02\x02\x02\x06\x17\x03\x02\x02\x02\b\"\x03\x02\x02\x02\n$\x03" +
-		"\x02\x02\x02\f\'\x03\x02\x02\x02\x0E\x11\x05\x04\x03\x02\x0F\x10\x07\t" +
-		"\x02\x02\x10\x12\x05\x06\x04\x02\x11\x0F\x03\x02\x02\x02\x11\x12\x03\x02" +
-		"\x02\x02\x12\x13\x03\x02\x02\x02\x13\x14\x07\x02\x02\x03\x14\x03\x03\x02" +
-		"\x02\x02\x15\x16\x07\x05\x02\x02\x16\x05\x03\x02\x02\x02\x17\x1C\x05\b" +
-		"\x05\x02\x18\x19\x07\t\x02\x02\x19\x1B\x05\b\x05\x02\x1A\x18\x03\x02\x02" +
-		"\x02\x1B\x1E\x03\x02\x02\x02\x1C\x1A\x03\x02\x02\x02\x1C\x1D\x03\x02\x02" +
-		"\x02\x1D\x07\x03\x02\x02\x02\x1E\x1C\x03\x02\x02\x02\x1F#\x05\n\x06\x02" +
-		" #\x05\f\x07\x02!#\x07\x05\x02\x02\"\x1F\x03\x02\x02\x02\" \x03\x02\x02" +
-		"\x02\"!\x03\x02\x02\x02#\t\x03\x02\x02\x02$%\x07\x03\x02\x02%&\x07\x05" +
-		"\x02\x02&\v\x03\x02\x02\x02\'(\x07\x04\x02\x02()\x07\x05\x02\x02)*\x07" +
-		"\t\x02\x02*+\x07\x05\x02\x02+\r\x03\x02\x02\x02\x05\x11\x1C\"";
+		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\n3\x04\x02\t" +
+		"\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x03\x02\x05" +
+		"\x02\x0E\n\x02\x03\x02\x03\x02\x05\x02\x12\n\x02\x03\x02\x03\x02\x03\x02" +
+		"\x05\x02\x17\n\x02\x03\x02\x03\x02\x03\x02\x05\x02\x1C\n\x02\x03\x02\x03" +
+		"\x02\x05\x02 \n\x02\x03\x03\x03\x03\x03\x04\x03\x04\x03\x04\x07\x04\'" +
+		"\n\x04\f\x04\x0E\x04*\v\x04\x03\x05\x03\x05\x05\x05.\n\x05\x03\x06\x03" +
+		"\x06\x03\x06\x03\x06\x02\x02\x02\x07\x02\x02\x04\x02\x06\x02\b\x02\n\x02" +
+		"\x02\x03\x03\x02\x03\x04\x024\x02\x1F\x03\x02\x02\x02\x04!\x03\x02\x02" +
+		"\x02\x06#\x03\x02\x02\x02\b-\x03\x02\x02\x02\n/\x03\x02\x02\x02\f\x0E" +
+		"\x07\t\x02\x02\r\f\x03\x02\x02\x02\r\x0E\x03\x02\x02\x02\x0E\x0F\x03\x02" +
+		"\x02\x02\x0F\x11\x05\x04\x03\x02\x10\x12\x07\t\x02\x02\x11\x10\x03\x02" +
+		"\x02\x02\x11\x12\x03\x02\x02\x02\x12\x13\x03\x02\x02\x02\x13\x14\x07\x02" +
+		"\x02\x03\x14 \x03\x02\x02\x02\x15\x17\x07\t\x02\x02\x16\x15\x03\x02\x02" +
+		"\x02\x16\x17\x03\x02\x02\x02\x17\x18\x03\x02\x02\x02\x18\x1B\x05\x04\x03" +
+		"\x02\x19\x1A\x07\t\x02\x02\x1A\x1C\x05\x06\x04\x02\x1B\x19\x03\x02\x02" +
+		"\x02\x1B\x1C\x03\x02\x02\x02\x1C\x1D\x03\x02\x02\x02\x1D\x1E\x07\x02\x02" +
+		"\x03\x1E \x03\x02\x02\x02\x1F\r\x03\x02\x02\x02\x1F\x16\x03\x02\x02\x02" +
+		" \x03\x03\x02\x02\x02!\"\x07\x05\x02\x02\"\x05\x03\x02\x02\x02#(\x05\b" +
+		"\x05\x02$%\x07\t\x02\x02%\'\x05\b\x05\x02&$\x03\x02\x02\x02\'*\x03\x02" +
+		"\x02\x02(&\x03\x02\x02\x02()\x03\x02\x02\x02)\x07\x03\x02\x02\x02*(\x03" +
+		"\x02\x02\x02+.\x05\n\x06\x02,.\x07\x05\x02\x02-+\x03\x02\x02\x02-,\x03" +
+		"\x02\x02\x02.\t\x03\x02\x02\x02/0\t\x02\x02\x0201\x07\x05\x02\x021\v\x03" +
+		"\x02\x02\x02\t\r\x11\x16\x1B\x1F(-";
 	public static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!TerdParser.__ATN) {
@@ -329,7 +353,15 @@ export class CommandContext extends ParserRuleContext {
 		return this.getRuleContext(0, ExecutableContext);
 	}
 	public EOF(): TerminalNode { return this.getToken(TerdParser.EOF, 0); }
-	public SPACES(): TerminalNode | undefined { return this.tryGetToken(TerdParser.SPACES, 0); }
+	public SPACES(): TerminalNode[];
+	public SPACES(i: number): TerminalNode;
+	public SPACES(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(TerdParser.SPACES);
+		} else {
+			return this.getToken(TerdParser.SPACES, i);
+		}
+	}
 	public arguments(): ArgumentsContext | undefined {
 		return this.tryGetRuleContext(0, ArgumentsContext);
 	}
@@ -442,9 +474,6 @@ export class ArgumentContext extends ParserRuleContext {
 	public option(): OptionContext | undefined {
 		return this.tryGetRuleContext(0, OptionContext);
 	}
-	public optionWithArgument(): OptionWithArgumentContext | undefined {
-		return this.tryGetRuleContext(0, OptionWithArgumentContext);
-	}
 	public PATTERN(): TerminalNode | undefined { return this.tryGetToken(TerdParser.PATTERN, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
@@ -497,45 +526,6 @@ export class OptionContext extends ParserRuleContext {
 	public accept<Result>(visitor: TerdVisitor<Result>): Result {
 		if (visitor.visitOption) {
 			return visitor.visitOption(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class OptionWithArgumentContext extends ParserRuleContext {
-	public PATTERN(): TerminalNode[];
-	public PATTERN(i: number): TerminalNode;
-	public PATTERN(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(TerdParser.PATTERN);
-		} else {
-			return this.getToken(TerdParser.PATTERN, i);
-		}
-	}
-	public SPACES(): TerminalNode { return this.getToken(TerdParser.SPACES, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return TerdParser.RULE_optionWithArgument; }
-	// @Override
-	public enterRule(listener: TerdListener): void {
-		if (listener.enterOptionWithArgument) {
-			listener.enterOptionWithArgument(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: TerdListener): void {
-		if (listener.exitOptionWithArgument) {
-			listener.exitOptionWithArgument(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: TerdVisitor<Result>): Result {
-		if (visitor.visitOptionWithArgument) {
-			return visitor.visitOptionWithArgument(this);
 		} else {
 			return visitor.visitChildren(this);
 		}

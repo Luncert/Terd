@@ -20,10 +20,10 @@ public class TerdParser extends Parser {
 		SPACES=7, WS=8;
 	public static final int
 		RULE_command = 0, RULE_executable = 1, RULE_arguments = 2, RULE_argument = 3, 
-		RULE_option = 4, RULE_optionWithArgument = 5;
+		RULE_option = 4;
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"command", "executable", "arguments", "argument", "option", "optionWithArgument"
+			"command", "executable", "arguments", "argument", "option"
 		};
 	}
 	public static final String[] ruleNames = makeRuleNames();
@@ -96,7 +96,10 @@ public class TerdParser extends Parser {
 			return getRuleContext(ExecutableContext.class,0);
 		}
 		public TerminalNode EOF() { return getToken(TerdParser.EOF, 0); }
-		public TerminalNode SPACES() { return getToken(TerdParser.SPACES, 0); }
+		public List<TerminalNode> SPACES() { return getTokens(TerdParser.SPACES); }
+		public TerminalNode SPACES(int i) {
+			return getToken(TerdParser.SPACES, i);
+		}
 		public ArgumentsContext arguments() {
 			return getRuleContext(ArgumentsContext.class,0);
 		}
@@ -111,24 +114,69 @@ public class TerdParser extends Parser {
 		enterRule(_localctx, 0, RULE_command);
 		int _la;
 		try {
-			enterOuterAlt(_localctx, 1);
-			{
-			setState(12);
-			executable();
-			setState(15);
+			setState(29);
 			_errHandler.sync(this);
-			_la = _input.LA(1);
-			if (_la==SPACES) {
+			switch ( getInterpreter().adaptivePredict(_input,4,_ctx) ) {
+			case 1:
+				enterOuterAlt(_localctx, 1);
 				{
-				setState(13);
-				match(SPACES);
-				setState(14);
-				arguments();
+				setState(11);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if (_la==SPACES) {
+					{
+					setState(10);
+					match(SPACES);
+					}
 				}
-			}
 
-			setState(17);
-			match(EOF);
+				setState(13);
+				executable();
+				setState(15);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if (_la==SPACES) {
+					{
+					setState(14);
+					match(SPACES);
+					}
+				}
+
+				setState(17);
+				match(EOF);
+				}
+				break;
+			case 2:
+				enterOuterAlt(_localctx, 2);
+				{
+				setState(20);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if (_la==SPACES) {
+					{
+					setState(19);
+					match(SPACES);
+					}
+				}
+
+				setState(22);
+				executable();
+				setState(25);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if (_la==SPACES) {
+					{
+					setState(23);
+					match(SPACES);
+					setState(24);
+					arguments();
+					}
+				}
+
+				setState(27);
+				match(EOF);
+				}
+				break;
 			}
 		}
 		catch (RecognitionException re) {
@@ -156,7 +204,7 @@ public class TerdParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(19);
+			setState(31);
 			match(PATTERN);
 			}
 		}
@@ -195,21 +243,21 @@ public class TerdParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(21);
+			setState(33);
 			argument();
-			setState(26);
+			setState(38);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==SPACES) {
 				{
 				{
-				setState(22);
+				setState(34);
 				match(SPACES);
-				setState(23);
+				setState(35);
 				argument();
 				}
 				}
-				setState(28);
+				setState(40);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -230,9 +278,6 @@ public class TerdParser extends Parser {
 		public OptionContext option() {
 			return getRuleContext(OptionContext.class,0);
 		}
-		public OptionWithArgumentContext optionWithArgument() {
-			return getRuleContext(OptionWithArgumentContext.class,0);
-		}
 		public TerminalNode PATTERN() { return getToken(TerdParser.PATTERN, 0); }
 		public ArgumentContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -246,24 +291,19 @@ public class TerdParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(32);
+			setState(43);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__0:
-				{
-				setState(29);
-				option();
-				}
-				break;
 			case T__1:
 				{
-				setState(30);
-				optionWithArgument();
+				setState(41);
+				option();
 				}
 				break;
 			case PATTERN:
 				{
-				setState(31);
+				setState(42);
 				match(PATTERN);
 				}
 				break;
@@ -294,51 +334,21 @@ public class TerdParser extends Parser {
 	public final OptionContext option() throws RecognitionException {
 		OptionContext _localctx = new OptionContext(_ctx, getState());
 		enterRule(_localctx, 8, RULE_option);
+		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(34);
-			match(T__0);
-			setState(35);
-			match(PATTERN);
+			setState(45);
+			_la = _input.LA(1);
+			if ( !(_la==T__0 || _la==T__1) ) {
+			_errHandler.recoverInline(this);
 			}
-		}
-		catch (RecognitionException re) {
-			_localctx.exception = re;
-			_errHandler.reportError(this, re);
-			_errHandler.recover(this, re);
-		}
-		finally {
-			exitRule();
-		}
-		return _localctx;
-	}
-
-	public static class OptionWithArgumentContext extends ParserRuleContext {
-		public List<TerminalNode> PATTERN() { return getTokens(TerdParser.PATTERN); }
-		public TerminalNode PATTERN(int i) {
-			return getToken(TerdParser.PATTERN, i);
-		}
-		public TerminalNode SPACES() { return getToken(TerdParser.SPACES, 0); }
-		public OptionWithArgumentContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
-		}
-		@Override public int getRuleIndex() { return RULE_optionWithArgument; }
-	}
-
-	public final OptionWithArgumentContext optionWithArgument() throws RecognitionException {
-		OptionWithArgumentContext _localctx = new OptionWithArgumentContext(_ctx, getState());
-		enterRule(_localctx, 10, RULE_optionWithArgument);
-		try {
-			enterOuterAlt(_localctx, 1);
-			{
-			setState(37);
-			match(T__1);
-			setState(38);
-			match(PATTERN);
-			setState(39);
-			match(SPACES);
-			setState(40);
+			else {
+				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+				_errHandler.reportMatch(this);
+				consume();
+			}
+			setState(46);
 			match(PATTERN);
 			}
 		}
@@ -354,18 +364,20 @@ public class TerdParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\n-\4\2\t\2\4\3\t"+
-		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\3\2\3\2\3\2\5\2\22\n\2\3\2\3\2\3\3"+
-		"\3\3\3\4\3\4\3\4\7\4\33\n\4\f\4\16\4\36\13\4\3\5\3\5\3\5\5\5#\n\5\3\6"+
-		"\3\6\3\6\3\7\3\7\3\7\3\7\3\7\3\7\2\2\b\2\4\6\b\n\f\2\2\2*\2\16\3\2\2\2"+
-		"\4\25\3\2\2\2\6\27\3\2\2\2\b\"\3\2\2\2\n$\3\2\2\2\f\'\3\2\2\2\16\21\5"+
-		"\4\3\2\17\20\7\t\2\2\20\22\5\6\4\2\21\17\3\2\2\2\21\22\3\2\2\2\22\23\3"+
-		"\2\2\2\23\24\7\2\2\3\24\3\3\2\2\2\25\26\7\5\2\2\26\5\3\2\2\2\27\34\5\b"+
-		"\5\2\30\31\7\t\2\2\31\33\5\b\5\2\32\30\3\2\2\2\33\36\3\2\2\2\34\32\3\2"+
-		"\2\2\34\35\3\2\2\2\35\7\3\2\2\2\36\34\3\2\2\2\37#\5\n\6\2 #\5\f\7\2!#"+
-		"\7\5\2\2\"\37\3\2\2\2\" \3\2\2\2\"!\3\2\2\2#\t\3\2\2\2$%\7\3\2\2%&\7\5"+
-		"\2\2&\13\3\2\2\2\'(\7\4\2\2()\7\5\2\2)*\7\t\2\2*+\7\5\2\2+\r\3\2\2\2\5"+
-		"\21\34\"";
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\n\63\4\2\t\2\4\3"+
+		"\t\3\4\4\t\4\4\5\t\5\4\6\t\6\3\2\5\2\16\n\2\3\2\3\2\5\2\22\n\2\3\2\3\2"+
+		"\3\2\5\2\27\n\2\3\2\3\2\3\2\5\2\34\n\2\3\2\3\2\5\2 \n\2\3\3\3\3\3\4\3"+
+		"\4\3\4\7\4\'\n\4\f\4\16\4*\13\4\3\5\3\5\5\5.\n\5\3\6\3\6\3\6\3\6\2\2\7"+
+		"\2\4\6\b\n\2\3\3\2\3\4\2\64\2\37\3\2\2\2\4!\3\2\2\2\6#\3\2\2\2\b-\3\2"+
+		"\2\2\n/\3\2\2\2\f\16\7\t\2\2\r\f\3\2\2\2\r\16\3\2\2\2\16\17\3\2\2\2\17"+
+		"\21\5\4\3\2\20\22\7\t\2\2\21\20\3\2\2\2\21\22\3\2\2\2\22\23\3\2\2\2\23"+
+		"\24\7\2\2\3\24 \3\2\2\2\25\27\7\t\2\2\26\25\3\2\2\2\26\27\3\2\2\2\27\30"+
+		"\3\2\2\2\30\33\5\4\3\2\31\32\7\t\2\2\32\34\5\6\4\2\33\31\3\2\2\2\33\34"+
+		"\3\2\2\2\34\35\3\2\2\2\35\36\7\2\2\3\36 \3\2\2\2\37\r\3\2\2\2\37\26\3"+
+		"\2\2\2 \3\3\2\2\2!\"\7\5\2\2\"\5\3\2\2\2#(\5\b\5\2$%\7\t\2\2%\'\5\b\5"+
+		"\2&$\3\2\2\2\'*\3\2\2\2(&\3\2\2\2()\3\2\2\2)\7\3\2\2\2*(\3\2\2\2+.\5\n"+
+		"\6\2,.\7\5\2\2-+\3\2\2\2-,\3\2\2\2.\t\3\2\2\2/\60\t\2\2\2\60\61\7\5\2"+
+		"\2\61\13\3\2\2\2\t\r\21\26\33\37(-";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

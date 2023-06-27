@@ -24,6 +24,7 @@ export default class CommandExecutor {
   }
 
   public execute(cmd: Command): Promise<number> {
+    // console.log(cmd);
     return new Promise((resolve, reject) => {
       const stdout = new Writable();
       const stderr = new Writable();
@@ -34,6 +35,7 @@ export default class CommandExecutor {
         cwd: this.cwd,
         windowsHide: true,
         stdio: [null, 'pipe', 'pipe'],
+        shell: '/bin/zsh'
       });
       proc.stdout.pipe(stdout);
       proc.stderr.pipe(stderr);

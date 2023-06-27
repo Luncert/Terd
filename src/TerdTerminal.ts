@@ -1,11 +1,18 @@
+import { assert } from "console";
 import Terd from "./Terd";
+import { ASCII, CSI } from "./ASCII";
+
+const CODE_CSI = '\x1b[';
+const CODE_SP = '\x20';
 
 export default class TerdTerminal extends Terd {
   
-  private prevCh = 0;
+  private prevInput: number;
   private readonly processKeyBind = this.processKey.bind(this);
+  private readonly keyHandlers: Map<string, KeyHandler> = new Map();
 
   public run() {
+    this.registerKeyHandlers();
     this.banner();
     this.prompt();
     process.stdin.setRawMode(true);
@@ -17,39 +24,84 @@ export default class TerdTerminal extends Terd {
   }
 
   private processKey(keystroke: Buffer) {
-    const c = keystroke[0];
-    switch (c) {
-      case 3: // ctrl c
-        if (this.hasInput()) {
-          this.clearBuffer();
-          this.onData('\r\n');
-          this.prompt();
-        } else if (this.prevCh == 3) {
-          this.exit();
-        } else {
-          this.prevCh = c;
-          this.onData('\n(To exit, press Ctrl+C again or Ctrl+D)');
-        }
-        return;
-      case 4: // ctrl d
-        this.exit();
-      default:
-        this.print(c); // echo
-        this.process(String.fromCharCode(c), c);
+    const handler = this.keyHandlers.get(keystroke.toString());
+    if (handler) {
+      handler();
+    } else {
+      console.assert(keystroke.length == 1);
+      const c = keystroke[0];
+      this.inputBuffer.push(c);
     }
-    this.prevCh = c;
+    this.prevInput = keystroke[0];
   }
 
-  private print(c: number) {
-    if (c == 13) {
-      this.onData('\n');
-    } else {
-      this.onData(String.fromCharCode(c));
-    }
+  private registerKeyHandlers() {
+    const newlineHandler = () => {
+      if (this.prevInput === 3) {
+        this.onData('\n');
+        this.prompt();
+      } else {
+        this.commit();
+      }
+    };
+    this.registerKeyHandler('\r', newlineHandler);
+    this.registerKeyHandler('\n', newlineHandler);
+    this.registerKeyHandler('\x03', () => {
+      if (this.inputBuffer.hasInput()) {
+        this.inputBuffer.clear();
+        this.histories.resetCursors();
+      } else if (this.prevInput == 3) {
+        this.exit();
+      } else {
+        this.onData('\n(To exit, press Ctrl+C again or Ctrl+D)');
+      }
+    }); // ctrl c
+    this.registerKeyHandler('\x04', () => this.exit()); // ctrl d
+    this.registerKeyHandler('\x7F', () => this.backspace());
+    this.registerKeyHandler(ASCII.Up, () => {
+      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+        const history = this.histories.previous;
+        if (history !== undefined) {
+          this.inputBuffer.replace(history);
+        }
+      }
+    });
+    this.registerKeyHandler(ASCII.Down, () => {
+      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+        const history = this.histories.next;
+        this.inputBuffer.replace(history);
+      }
+    });
+    this.registerKeyHandler(ASCII.Backward, () => this.inputBuffer.moveCursor(-1));
+    this.registerKeyHandler(ASCII.Forward, () => this.inputBuffer.moveCursor(1));
+  }
+
+  private registerKeyHandler(seq: string, handler: KeyHandler) {
+    this.keyHandlers.set(seq, handler);
   }
 
   protected exit() {
     process.stdin.off('data', this.processKeyBind);
     process.stdin.destroy();
+  }
+
+  private print(s: number | string | Buffer) {
+    if (typeof(s) === 'string') {
+      this.onData(s);
+      return;
+    } else if (s instanceof Buffer) {
+      for (const c of s) {
+        this.onData(String.fromCharCode(c));
+      }
+      return;
+    }
+
+    this.onData(String.fromCharCode(s));
+  }
+
+  private backspace() {
+    if (this.inputBuffer.pop() !== undefined) {
+      this.print(`${CSI.CUB(1)}${CSI.DCH(1)}`);
+    }
   }
 }

@@ -1,15 +1,18 @@
 import CommandExecutor from "./CommandExecutor";
-import iconv from 'iconv-lite';
 import { parseCommand } from "./grammar";
 import chalk from 'chalk';
 import fs from 'fs';
 import path from "path";
+import InputBuffer from "./InputBuffer";
+import InputHistory from "./InputHistory";
 
 const PackageInfo = require('../package.json') as any;
 
 export default class Terd {
 
-  private inputBuffer: number[] = [];
+  protected readonly inputBuffer = new InputBuffer(this.onData.bind(this));
+
+  protected readonly histories = new InputHistory();
 
   private executor = new CommandExecutor(
     this.onData.bind(this),
@@ -24,7 +27,15 @@ export default class Terd {
 
   public write(input: string) {
     for (const c of input) {
-      this.process(c, c.charCodeAt(0));
+      const code = c.charCodeAt(0);
+      switch (code) {
+        case 13: // \r
+        case 10: // \n
+          this.commit();
+          break;
+        default:
+          this.inputBuffer.push(code);
+      }
     }
   }
 
@@ -72,37 +83,15 @@ export default class Terd {
     process.exit(0);
   }
 
-  protected hasInput() {
-    return this.inputBuffer.length > 0;
-  }
-
-  protected clearBuffer() {
-    this.inputBuffer = [];
-  }
-
-  protected process(ch: string, code: number) {
-    // console.log(ch, code);
-    switch (code) {
-      case 13: // \r
-      case 10: // \n
-        if (this.hasInput()) {
-          const cmd = this.parseInput();
-          this.executor.execute(cmd).then(() => {
-            this.prompt();
-          });
-        } else {
-          this.prompt();
-        }
-        break;
-      default:
-        this.inputBuffer.push(code);
+  protected commit() {
+    const input = this.inputBuffer.toString();
+    if (input) {
+      this.inputBuffer.pack();
+      this.histories.push(input);
+      const cmd = parseCommand(input);
+      this.executor.execute(cmd).then(() => {
+        this.prompt();
+      });
     }
-  }
-
-  private parseInput() {
-    const input = iconv.decode(Buffer.from(this.inputBuffer), 'gbk');
-    const cmd = parseCommand(input);
-    this.inputBuffer = [];
-    return cmd;
   }
 }

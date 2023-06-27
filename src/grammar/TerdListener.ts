@@ -8,7 +8,6 @@ import { ExecutableContext } from "./TerdParser";
 import { ArgumentsContext } from "./TerdParser";
 import { ArgumentContext } from "./TerdParser";
 import { OptionContext } from "./TerdParser";
-import { OptionWithArgumentContext } from "./TerdParser";
 
 
 /**
@@ -70,16 +69,5 @@ export interface TerdListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitOption?: (ctx: OptionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by `TerdParser.optionWithArgument`.
-	 * @param ctx the parse tree
-	 */
-	enterOptionWithArgument?: (ctx: OptionWithArgumentContext) => void;
-	/**
-	 * Exit a parse tree produced by `TerdParser.optionWithArgument`.
-	 * @param ctx the parse tree
-	 */
-	exitOptionWithArgument?: (ctx: OptionWithArgumentContext) => void;
 }
 

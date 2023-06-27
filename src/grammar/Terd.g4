@@ -1,7 +1,8 @@
 grammar Terd;
 
 command
-  : executable (SPACES arguments)? EOF
+  : SPACES? executable SPACES? EOF
+  | SPACES? executable (SPACES arguments)? EOF
   ;
 
 executable
@@ -13,15 +14,11 @@ arguments
   ;
 
 argument
-  : (option | optionWithArgument | PATTERN)
+  : (option | PATTERN)
   ;
 
 option
-  : '-' PATTERN
-  ;
-
-optionWithArgument
-  : '--' PATTERN SPACES PATTERN
+  : ('-' | '--') PATTERN
   ;
 
 PATTERN
