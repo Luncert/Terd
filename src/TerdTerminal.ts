@@ -9,18 +9,31 @@ export default class TerdTerminal extends Terd {
   
   private prevInput: number;
   private readonly processKeyBind = this.processKey.bind(this);
+  private readonly forwardKeyBind = this.executor.forward.bind(this.executor);
   private readonly keyHandlers: Map<string, KeyHandler> = new Map();
 
   public run() {
     this.registerKeyHandlers();
     this.banner();
     this.prompt();
+
+    this.executor.beforeExecute(() => {
+      process.stdin.off('data', this.processKeyBind);
+      process.stdin.setRawMode(false);
+      process.stdin.on('data', this.forwardKeyBind);
+    });
+    this.executor.afterExecute(() => {
+      process.stdin.off('data', this.forwardKeyBind);
+      process.stdin.setRawMode(true);
+      process.stdin.on('data', this.processKeyBind);
+    });
+
     process.stdin.setRawMode(true);
     process.stdin.on('data', this.processKeyBind);
     process.stdin.on('close', () => {
       this.onData('\r\n');
       super.exit();
-    })
+    });
   }
 
   private processKey(keystroke: Buffer) {

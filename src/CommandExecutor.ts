@@ -1,6 +1,5 @@
 import child_process from 'child_process';
 import { Command } from './grammar';
-import { Writable } from 'stream';
 
 export default class CommandExecutor {
 
@@ -9,6 +8,10 @@ export default class CommandExecutor {
   private _cwd: string;
 
   private _lastSucceed: boolean = true;
+
+  private beforeExecuteListener: () => void;
+
+  private afterExecuteListener: () => void;
 
   constructor(private readonly onData: OutputListener,
     private readonly onError: OutputListener) {
@@ -22,26 +25,36 @@ export default class CommandExecutor {
   public get lastSucceed() {
     return this._lastSucceed;
   }
+  
+  public beforeExecute(beforeExecuteListener: () => void) {
+    this.beforeExecuteListener = beforeExecuteListener;
+  }
+
+  public afterExecute(afterExecuteListener: () => void) {
+    this.afterExecuteListener = afterExecuteListener;
+  }
+
+  public forward(data: Buffer) {
+    for (const [pid, proc] of this.processes) {
+      console.log(proc, data)
+      proc.stdin.write(data);
+    }
+  }
 
   public execute(cmd: Command): Promise<number> {
-    // console.log(cmd);
     return new Promise((resolve, reject) => {
-      const stdout = new Writable();
-      const stderr = new Writable();
-      stdout._write = (data) => this.onData(data);
-      stderr._write = (data) => this.onError(data);
-  
+      this.beforeExecuteListener && this.beforeExecuteListener();
+
       const proc = child_process.spawn(cmd.executable, cmd.args, {
         cwd: this.cwd,
-        windowsHide: true,
-        stdio: [null, 'pipe', 'pipe'],
+        stdio: 'pipe',
         shell: '/bin/zsh'
       });
-      proc.stdout.pipe(stdout);
-      proc.stderr.pipe(stderr);
-  
-      this.processes.set(proc.pid, proc);
+
+      proc.stdout.on('data', (data) => this.onData(data));
+      proc.stderr.on('data', (data) => this.onError(data));
       proc.on('exit', (code, signal) => {
+        this.afterExecuteListener && this.afterExecuteListener();
         this.processes.delete(proc.pid);
         resolve(code);
       });

@@ -14,7 +14,7 @@ export default class Terd {
 
   protected readonly histories = new InputHistory();
 
-  private executor = new CommandExecutor(
+  protected readonly executor = new CommandExecutor(
     this.onData.bind(this),
     this.onError.bind(this));
 
@@ -89,7 +89,7 @@ export default class Terd {
       this.inputBuffer.pack();
       this.histories.push(input);
       const cmd = parseCommand(input);
-      this.executor.execute(cmd).then(() => {
+      this.executor.execute(cmd).then((code) => {
         this.prompt();
       });
     }
