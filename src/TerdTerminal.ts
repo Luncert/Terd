@@ -1,29 +1,28 @@
-import { assert } from "console";
 import Terd from "./Terd";
 import { ASCII, CSI } from "./ASCII";
-
-const CODE_CSI = '\x1b[';
-const CODE_SP = '\x20';
 
 export default class TerdTerminal extends Terd {
   
   private prevInput: number;
   private readonly processKeyBind = this.processKey.bind(this);
-  private readonly forwardKeyBind = this.executor.forward.bind(this.executor);
   private readonly keyHandlers: Map<string, KeyHandler> = new Map();
 
-  public run() {
+  constructor(opt?: TerdOpt) {
+    super(opt);
+    this.on('data', (data) => process.stdout.write(data));
+    this.on('error', (data) => process.stderr.write(data));
     this.registerKeyHandlers();
+  }
+
+  public run() {
     this.banner();
     this.prompt();
 
     this.executor.beforeExecute(() => {
       process.stdin.off('data', this.processKeyBind);
       process.stdin.setRawMode(false);
-      process.stdin.on('data', this.forwardKeyBind);
     });
     this.executor.afterExecute(() => {
-      process.stdin.off('data', this.forwardKeyBind);
       process.stdin.setRawMode(true);
       process.stdin.on('data', this.processKeyBind);
     });
