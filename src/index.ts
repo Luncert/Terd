@@ -1,4 +1,4 @@
-import TerdTerminal from "./TerdTerminal";
+import Terd from "./Terd";
 
-const terd = new TerdTerminal({ printBanner: true, printPrompt: true });
+const terd = new Terd({ printBanner: true, printPrompt: true });
 terd.run();

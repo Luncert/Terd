@@ -5,58 +5,72 @@ import fs from 'fs';
 import path from "path";
 import InputBuffer from "./InputBuffer";
 import InputHistory from "./InputHistory";
+import { ASCII, CSI } from "./ASCII";
 
 const PackageInfo = require('../package.json') as any;
 
 export default class Terd {
 
-  protected readonly inputBuffer = new InputBuffer(this.onData.bind(this));
-
+  protected readonly inputBuffer = new InputBuffer(this.print.bind(this));
   protected readonly histories = new InputHistory();
+  protected readonly keyHandlers: Map<string, KeyHandler> = new Map();
+  private pressKeyBind = this.processKey.bind(this);
+  private prevInput: number;
 
   protected readonly executor = new CommandExecutor(
-    this.onData.bind(this),
-    this.onError.bind(this));
+    this.stdin,
+    this.stdout,
+    this.stderr);
 
-  private dataListeners: OutputListener[] = [];
-
-  private errorListeners: OutputListener[] = [];
-
-  constructor(private readonly opt?: TerdOpt) {
+  constructor(private readonly opt?: TerdOpt,
+    private readonly stdin: NodeJS.ReadStream = process.stdin,
+    private readonly stdout: NodeJS.WriteStream = process.stdout,
+    private readonly stderr: NodeJS.WriteStream = process.stderr) {
+    this.registerKeyHandlers();
   }
 
-  public write(input: string) {
-    for (const c of input) {
-      const code = c.charCodeAt(0);
-      switch (code) {
-        case 13: // \r
-        case 10: // \n
-          this.commit();
-          break;
-        default:
-          this.inputBuffer.push(code);
-      }
-    }
-  }
+  public run() {
+    this.banner();
+    this.prompt();
 
-  public on(event: 'data' | 'error', listener: OutputListener) {
-    if (event === 'data') {
-      this.dataListeners.push(listener);
-    } else {
-      this.errorListeners.push(listener);
-    }
+    const isRaw = this.stdin.isRaw;
+    this.executor.beforeExecute(() => {
+      this.stdin.off('data', this.pressKeyBind);
+      this.stdin.pause();
+      this.stdin.setRawMode(isRaw);
+    });
+    this.executor.afterExecute(() => {
+      this.stdin.resume();
+      this.stdin.on('data', this.pressKeyBind);
+      this.stdin.setRawMode(true);
+    });
+
+    this.stdin.setRawMode(true);
+    this.stdin.on('data', this.pressKeyBind);
+    this.stdin.on('close', () => {
+      this.print('\r\n');
+    });
   }
 
   public close(force?: boolean) {
     this.executor.close(force);
+    this.stdin.off('data', this.pressKeyBind);
   }
 
-  protected onData(chunk: Buffer | string) {
-    this.dataListeners.forEach(listener => listener(chunk));
+  protected exit() {
+    this.close();
+    // this.stdin.destroy();
+    // process.exit(0);
   }
 
-  protected onError(chunk: Buffer | string) {
-    this.errorListeners.forEach(listener => listener(chunk));
+  private processKey(keystroke: Buffer) {
+    const handler = this.keyHandlers.get(keystroke.toString());
+    if (handler) {
+      handler();
+    } else {
+      this.inputBuffer.push(keystroke);
+    }
+    this.prevInput = keystroke[0];
   }
 
   protected banner() {
@@ -67,20 +81,15 @@ export default class Terd {
       lines[lines.length - 4] += chalk.redBright('v' + PackageInfo.version)
       lines[lines.length - 3] += chalk.blueBright('by ' + PackageInfo.author)
       lines[lines.length - 2] += chalk.whiteBright(chalk.underline(PackageInfo.homepage))
-      this.onData(lines.join('\r\n') + '\r\n');
+      this.print(lines.join('\r\n') + '\r\n');
     }
   }
 
   protected prompt() {
     if (this.opt?.printPrompt) {
       const str = chalk.cyan(this.executor.cwd) + (this.executor.lastSucceed ? chalk.greenBright('>') : chalk.red('>'))
-      this.onData(str);
+      this.print(str);
     }
-  }
-
-  protected exit() {
-    this.close();
-    process.exit(0);
   }
 
   protected commit() {
@@ -92,6 +101,73 @@ export default class Terd {
       this.executor.execute(cmd).then((code) => {
         this.prompt();
       });
+    }
+  }
+
+  private registerKeyHandlers() {
+    const newlineHandler = () => {
+      if (this.prevInput === 3) {
+        this.print('\n');
+        this.prompt();
+      } else {
+        this.commit();
+      }
+    };
+    this.registerKeyHandler('\r', newlineHandler);
+    this.registerKeyHandler('\n', newlineHandler);
+    this.registerKeyHandler('\x03', () => {
+      if (this.inputBuffer.hasInput()) {
+        this.inputBuffer.clear();
+        this.histories.resetCursors();
+      } else if (this.prevInput == 3) {
+        this.exit();
+      } else {
+        this.print('\n(To exit, press Ctrl+C again or Ctrl+D)');
+      }
+    }); // ctrl c
+    this.registerKeyHandler('\x04', () => this.exit()); // ctrl d
+    this.registerKeyHandler('\x7F', () => this.backspace());
+    this.registerKeyHandler(ASCII.Up, () => {
+      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+        const history = this.histories.previous;
+        if (history !== undefined) {
+          this.inputBuffer.replace(history);
+        }
+      }
+    });
+    this.registerKeyHandler(ASCII.Down, () => {
+      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+        const history = this.histories.next;
+        this.inputBuffer.replace(history);
+      }
+    });
+    this.registerKeyHandler(ASCII.Backward, () => this.inputBuffer.moveCursor(-1));
+    this.registerKeyHandler(ASCII.Forward, () => this.inputBuffer.moveCursor(1));
+  }
+
+  private registerKeyHandler(seq: string, handler: KeyHandler) {
+    this.keyHandlers.set(seq, handler);
+  }
+
+  private print(s: number | string | Buffer) {
+    if (typeof(s) === 'string') {
+      this.stdout.write(s);
+      return;
+    } else if (s instanceof Buffer) {
+      this.stdout.write(s);
+      return;
+    }
+
+    this.stdout.write(String.fromCharCode(s));
+  }
+
+  protected printError(chunk: Buffer | string) {
+    this.stderr.write(chunk);
+  }
+
+  private backspace() {
+    if (this.inputBuffer.pop() !== undefined) {
+      this.print(`${CSI.CUB(1)}${CSI.DCH(1)}`);
     }
   }
 }

@@ -13,8 +13,10 @@ export default class CommandExecutor {
 
   private afterExecuteListener: () => void;
 
-  constructor(private readonly onData: OutputListener,
-    private readonly onError: OutputListener) {
+  constructor(
+    private readonly stdin: NodeJS.ReadStream,
+    private readonly stdout: NodeJS.WriteStream,
+    private readonly stderr: NodeJS.WriteStream) {
     this._cwd = process.cwd().replace(/\\/g, '/');
   }
 
@@ -34,25 +36,18 @@ export default class CommandExecutor {
     this.afterExecuteListener = afterExecuteListener;
   }
 
-  public forward(data: Buffer) {
-    for (const [pid, proc] of this.processes) {
-      console.log(proc, data)
-      proc.stdin.write(data);
-    }
-  }
-
   public execute(cmd: Command): Promise<number> {
     return new Promise((resolve, reject) => {
       this.beforeExecuteListener && this.beforeExecuteListener();
 
       const proc = child_process.spawn(cmd.executable, cmd.args, {
         cwd: this.cwd,
-        stdio: 'pipe',
-        shell: '/bin/zsh'
+        stdio: 'pipe', // can't use stream directly, stream will be closed by proc
+        shell: false
       });
+      this.processes.set(proc.pid, proc);
 
-      proc.stdout.on('data', (data) => this.onData(data));
-      proc.stderr.on('data', (data) => this.onError(data));
+      this.stdin.pipe(proc.stdin);
       proc.on('exit', (code, signal) => {
         this.afterExecuteListener && this.afterExecuteListener();
         this.processes.delete(proc.pid);
