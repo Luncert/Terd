@@ -1,57 +1,77 @@
 import child_process from 'child_process';
+import os from 'os';
 import { Command } from './grammar';
+import { AfterExecuteListener, BeforeExecuteListener, Consumer, ICommandExecutor } from './types';
+import { IDisposable, IPty, spawn } from 'node-pty';
+import { resolve } from 'path';
 
-export default class CommandExecutor {
+abstract class BasicCommandExecutor implements ICommandExecutor {
 
-  private processes: Map<number, child_process.ChildProcessWithoutNullStreams> = new Map();
+  protected _cwd: string;
+  protected beforeExecuteListener: BeforeExecuteListener | undefined;
+  protected dataListener: Consumer<string> | undefined;
+  protected afterExecuteListener: AfterExecuteListener | undefined;
 
-  private _cwd: string;
+  constructor() {
+    this._cwd = process.cwd().replace(/\\/g, '/');
+  }
 
-  private _lastSucceed: boolean = true;
+  get cwd(): string {
+    return this._cwd;
+  }
 
-  private beforeExecuteListener: () => void;
+  before(event: 'execute', listener: BeforeExecuteListener): IDisposable {
+    this.beforeExecuteListener = listener;
+    return { dispose: () => this.beforeExecuteListener = undefined };
+  }
 
-  private afterExecuteListener: () => void;
+  on(event: 'data', listener: Consumer<string>): IDisposable {
+    this.dataListener = listener;
+    return { dispose: () => this.dataListener = undefined };
+  }
+
+  after(event: 'execute', listener: AfterExecuteListener): IDisposable {
+    this.afterExecuteListener = listener;
+    return { dispose: () => this.afterExecuteListener = undefined };
+  }
+
+  abstract write(s: string): void;
+  abstract execute(cmd: Command): Promise<number>;
+  abstract close(force?: boolean | undefined): void;
+}
+
+export class ChildProcessCommandExecutor extends BasicCommandExecutor {
+
+  private processes: Map<number, child_process.ChildProcessWithoutNullStreams>
+    = new Map();
 
   constructor(
     private readonly stdin: NodeJS.ReadStream,
     private readonly stdout: NodeJS.WriteStream,
     private readonly stderr: NodeJS.WriteStream) {
-    this._cwd = process.cwd().replace(/\\/g, '/');
+    super();
   }
 
-  public get cwd() {
-    return this._cwd;
+  write(s: string): void {
+    throw new Error('Method not implemented.');
   }
 
-  public get lastSucceed() {
-    return this._lastSucceed;
-  }
-  
-  public beforeExecute(beforeExecuteListener: () => void) {
-    this.beforeExecuteListener = beforeExecuteListener;
-  }
-
-  public afterExecute(afterExecuteListener: () => void) {
-    this.afterExecuteListener = afterExecuteListener;
-  }
-
-  public execute(cmd: Command): Promise<number> {
+  execute(cmd: Command): Promise<number> {
     return new Promise((resolve, reject) => {
       this.beforeExecuteListener && this.beforeExecuteListener();
 
-      const proc = child_process.spawn(cmd.executable, cmd.args, {
+      const proc = child_process.spawn(cmd.exec, cmd.args, {
         cwd: this.cwd,
         stdio: 'pipe', // can't use stream directly, stream will be closed by proc
         shell: false
       });
-      this.processes.set(proc.pid, proc);
+      this.processes.set(proc.pid || 0, proc);
 
       this.stdin.pipe(proc.stdin);
-      proc.on('exit', (code, signal) => {
-        this.afterExecuteListener && this.afterExecuteListener();
-        this.processes.delete(proc.pid);
-        resolve(code);
+      proc.on('exit', (code, signal: any) => {
+        this.afterExecuteListener && this.afterExecuteListener({exitCode: code || 0, signal});
+        this.processes.delete(proc.pid || 0);
+        resolve(code || 0);
       });
     });
   }
@@ -68,5 +88,59 @@ export default class CommandExecutor {
     }
     this.processes.forEach(p => p.kill());
     this.processes.clear();
+  }
+}
+
+export class PtyCommandExecutor extends BasicCommandExecutor {
+
+  private layout = {cols: process.stdout.columns, rows: process.stdout.rows};
+  private procs = new Map<number, IPty>();
+
+  write(s: string): void {
+    this.procs.forEach((proc) => proc.write(s));
+  }
+
+  execute(cmd: Command): Promise<number> {
+    return new Promise((resolve) => {
+      this.beforeExecuteListener && this.beforeExecuteListener();
+
+      const proc = spawn(cmd.exec, cmd.args, {
+        name: cmd.raw,
+        cols: this.layout.cols,
+        rows: this.layout.rows,
+        cwd: os.homedir(),
+        env: process.env
+      });
+
+      if (this.dataListener) {
+        proc.onData(this.dataListener);
+      }
+
+      proc.onExit((e) => {
+        this.procs.delete(proc.pid);
+        this.afterExecuteListener && this.afterExecuteListener(e);
+        resolve(e.exitCode);
+      });
+
+      this.procs.set(proc.pid, proc);
+    });
+  }
+
+  resize(cols: number, rows: number) {
+    this.layout.cols = cols;
+    this.layout.rows = rows;
+    this.procs.forEach(proc => proc.resize(cols, rows));
+  }
+
+  close(force?: boolean): void {
+    if (!force) {
+      const t = setInterval(() => {
+        if (this.procs.size == 0) {
+          clearInterval(t);
+        }
+      }, 100)
+    }
+    this.procs.forEach(p => p.kill());
+    this.procs.clear();
   }
 }

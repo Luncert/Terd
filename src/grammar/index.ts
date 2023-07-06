@@ -1,29 +1,39 @@
 import { CharStreams, CommonTokenStream } from "antlr4ts";
 import { TerdLexer } from "./TerdLexer";
-import { ArgumentsContext, ExecutableContext, TerdParser } from "./TerdParser";
+import { ArgumentsContext, CommandContext, ExecutableContext, TerdParser } from "./TerdParser";
 import { TerdListener } from "./TerdListener";
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker';
 import { printTokens } from "../util";
 
-export interface Command {
-  executable: string;
-  args: string[];
-  rest?: string;
+export class Command {
+
+  constructor(
+    readonly raw: string,
+    readonly exec: string,
+    readonly args: string[],
+  ) {
+  }
 }
 
 class TerdListerenerImpl implements TerdListener {
 
-  command: Command;
+  private _exec: string = '';
+  private _args: string[] = [];
+
+  public get exec() {
+    return this._exec;
+  }
+
+  public get args() {
+    return this._args;
+  }
 
   enterExecutable(ctx: ExecutableContext) {
-    this.command = {
-      executable: ctx.text,
-      args: []
-    };
+    this._exec = ctx.text;
   }
 
   enterArguments(ctx: ArgumentsContext) {
-    this.command.args.push(ctx.text);
+    this._args.push(ctx.text);
   }
 }
 
@@ -34,5 +44,5 @@ export function parseCommand(source: string): Command {
   const parser = new TerdParser(tokenStream);
   const listener = new TerdListerenerImpl();
   ParseTreeWalker.DEFAULT.walk((listener as TerdListener), parser.command());
-  return listener.command;
+  return new Command(source, listener.exec, listener.args);
 }

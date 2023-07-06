@@ -1,66 +1,95 @@
-import CommandExecutor from "./CommandExecutor";
+import { PtyCommandExecutor } from "./CommandExecutor";
 import { parseCommand } from "./grammar";
-import chalk from 'chalk';
-import fs from 'fs';
-import path from "path";
-import InputBuffer from "./InputBuffer";
 import InputHistory from "./InputHistory";
-import { ASCII, CSI } from "./ASCII";
+import { ASCII } from "./ASCII";
+import { Callback, Consumer, TerdOpt } from "./types";
+import OutputControl from "./OutputControl";
 
-const PackageInfo = require('../package.json') as any;
+export default class Terd extends OutputControl {
 
-export default class Terd {
-
-  protected readonly inputBuffer = new InputBuffer(this.print.bind(this));
   protected readonly histories = new InputHistory();
-  protected readonly keyHandlers: Map<string, KeyHandler> = new Map();
-  private pressKeyBind = this.processKey.bind(this);
+  protected readonly keyHandlers: Map<string, Callback> = new Map();
+  protected readonly executor = new PtyCommandExecutor();
+  protected readonly pressKeyBind = this.processKey.bind(this);
+  protected readonly forwardKeyBind = this.executor.write.bind(this.executor);
+
+  protected dataListener: Consumer<string> = () => {};
+  protected exitListener: Callback;
+
   private prevInput: number;
 
-  protected readonly executor = new CommandExecutor(
-    this.stdin,
-    this.stdout,
-    this.stderr);
-
-  constructor(private readonly opt?: TerdOpt,
-    private readonly stdin: NodeJS.ReadStream = process.stdin,
-    private readonly stdout: NodeJS.WriteStream = process.stdout,
-    private readonly stderr: NodeJS.WriteStream = process.stderr) {
+  constructor(private readonly opt?: TerdOpt) {
+    super(opt?.printBanner, opt?.printPrompt);
     this.registerKeyHandlers();
   }
 
-  public run() {
-    this.banner();
-    this.prompt();
-
-    const isRaw = this.stdin.isRaw;
-    this.executor.beforeExecute(() => {
-      this.stdin.off('data', this.pressKeyBind);
-      this.stdin.pause();
-      this.stdin.setRawMode(isRaw);
+  private registerKeyHandlers() {
+    const registerKeyHandler = (pattern: string, handler: Callback) =>
+      this.keyHandlers.set(pattern, handler);
+    const newlineHandler = () => {
+      if (this.prevInput === 3) {
+        this.print('\n');
+        this.prompt();
+      } else {
+        this.commit();
+      }
+    };
+    registerKeyHandler('\r', newlineHandler);
+    registerKeyHandler('\n', newlineHandler);
+    registerKeyHandler('\x03', () => {
+      if (this.inputBuffer.hasInput()) {
+        this.inputBuffer.clear();
+        this.histories.resetCursors();
+      } else if (this.prevInput == 3) {
+        this.close();
+      } else {
+        this.print('\n(To exit, press Ctrl+C again or Ctrl+D)');
+      }
+    }); // ctrl c
+    registerKeyHandler('\x04', () => this.close()); // ctrl d
+    registerKeyHandler('\x7F', () => this.backspace());
+    registerKeyHandler(ASCII.Up, () => {
+      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+        const history = this.histories.previous;
+        if (history !== undefined) {
+          this.inputBuffer.replace(history);
+        }
+      }
     });
-    this.executor.afterExecute(() => {
-      this.stdin.resume();
-      this.stdin.on('data', this.pressKeyBind);
-      this.stdin.setRawMode(true);
+    registerKeyHandler(ASCII.Down, () => {
+      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+        const history = this.histories.next;
+        this.inputBuffer.replace(history);
+      }
     });
-
-    this.stdin.setRawMode(true);
-    this.stdin.on('data', this.pressKeyBind);
-    this.stdin.on('close', () => {
-      this.print('\r\n');
-    });
+    registerKeyHandler(ASCII.Backward, () => this.inputBuffer.moveCursor(-1));
+    registerKeyHandler(ASCII.Forward, () => this.inputBuffer.moveCursor(1));
   }
 
-  public close(force?: boolean) {
-    this.executor.close(force);
-    this.stdin.off('data', this.pressKeyBind);
+  public write(input: string) {
+    this.processKey(Buffer.from(input));
   }
 
-  protected exit() {
-    this.close();
-    // this.stdin.destroy();
-    // process.exit(0);
+  public on(event: 'data', listener: Consumer<string>): void;
+  public on(event: 'exit', listener: Callback): void;
+  public on(event: string, listener: any) {
+    if (!listener) {
+      throw new Error('event listener is ' + listener);
+    }
+    switch (event) {
+      case 'data':
+        this.dataListener = listener;
+        break;
+      case 'exit':
+        this.exitListener = listener;
+        break;
+      default:
+        throw new Error('invalid event ' + event);
+    }
+  }
+
+  public close() {
+    this.executor.close(true);
   }
 
   private processKey(keystroke: Buffer) {
@@ -73,25 +102,6 @@ export default class Terd {
     this.prevInput = keystroke[0];
   }
 
-  protected banner() {
-    if (this.opt?.printBanner) {
-      let lines = fs.readFileSync(path.resolve(__dirname, 'banner.txt')).toString().split('\r\n')
-      .map((line) => chalk.greenBright(line))
-      // lines[lines.length - 4] += chalk.redBright(PackageInfo.version)
-      lines[lines.length - 4] += chalk.redBright('v' + PackageInfo.version)
-      lines[lines.length - 3] += chalk.blueBright('by ' + PackageInfo.author)
-      lines[lines.length - 2] += chalk.whiteBright(chalk.underline(PackageInfo.homepage))
-      this.print(lines.join('\r\n') + '\r\n');
-    }
-  }
-
-  protected prompt() {
-    if (this.opt?.printPrompt) {
-      const str = chalk.cyan(this.executor.cwd) + (this.executor.lastSucceed ? chalk.greenBright('>') : chalk.red('>'))
-      this.print(str);
-    }
-  }
-
   protected commit() {
     const input = this.inputBuffer.toString();
     if (input) {
@@ -99,75 +109,24 @@ export default class Terd {
       this.histories.push(input);
       const cmd = parseCommand(input);
       this.executor.execute(cmd).then((code) => {
-        this.prompt();
+        this.prompt(code === 0);
       });
     }
   }
 
-  private registerKeyHandlers() {
-    const newlineHandler = () => {
-      if (this.prevInput === 3) {
-        this.print('\n');
-        this.prompt();
-      } else {
-        this.commit();
-      }
-    };
-    this.registerKeyHandler('\r', newlineHandler);
-    this.registerKeyHandler('\n', newlineHandler);
-    this.registerKeyHandler('\x03', () => {
-      if (this.inputBuffer.hasInput()) {
-        this.inputBuffer.clear();
-        this.histories.resetCursors();
-      } else if (this.prevInput == 3) {
-        this.exit();
-      } else {
-        this.print('\n(To exit, press Ctrl+C again or Ctrl+D)');
-      }
-    }); // ctrl c
-    this.registerKeyHandler('\x04', () => this.exit()); // ctrl d
-    this.registerKeyHandler('\x7F', () => this.backspace());
-    this.registerKeyHandler(ASCII.Up, () => {
-      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
-        const history = this.histories.previous;
-        if (history !== undefined) {
-          this.inputBuffer.replace(history);
-        }
-      }
-    });
-    this.registerKeyHandler(ASCII.Down, () => {
-      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
-        const history = this.histories.next;
-        this.inputBuffer.replace(history);
-      }
-    });
-    this.registerKeyHandler(ASCII.Backward, () => this.inputBuffer.moveCursor(-1));
-    this.registerKeyHandler(ASCII.Forward, () => this.inputBuffer.moveCursor(1));
-  }
-
-  private registerKeyHandler(seq: string, handler: KeyHandler) {
-    this.keyHandlers.set(seq, handler);
-  }
-
-  private print(s: number | string | Buffer) {
+  protected print(s: number | string | Buffer) {
     if (typeof(s) === 'string') {
-      this.stdout.write(s);
+      this.dataListener(s);
       return;
     } else if (s instanceof Buffer) {
-      this.stdout.write(s);
+      this.dataListener(s.toString());
       return;
     }
 
-    this.stdout.write(String.fromCharCode(s));
+    this.dataListener(String.fromCharCode(s));
   }
 
-  protected printError(chunk: Buffer | string) {
-    this.stderr.write(chunk);
-  }
-
-  private backspace() {
-    if (this.inputBuffer.pop() !== undefined) {
-      this.print(`${CSI.CUB(1)}${CSI.DCH(1)}`);
-    }
+  protected cwd(): string {
+    return this.executor.cwd;
   }
 }
