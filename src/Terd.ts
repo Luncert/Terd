@@ -4,28 +4,42 @@ import InputHistory from "./InputHistory";
 import { ASCII } from "./ASCII";
 import { Callback, Consumer, TerdOpt } from "./types";
 import OutputControl from "./OutputControl";
+import chalk from "chalk";
 
 export default class Terd extends OutputControl {
 
-  protected readonly keyHandlers: Map<string, Callback> = new Map();
+  protected readonly keyHandlers: Map<string, Callback<boolean>> = new Map();
   protected readonly executor = new PtyCommandExecutor();
-  protected readonly pressKeyBind = this.processKey.bind(this);
-  protected readonly forwardKeyBind = this.executor.write.bind(this.executor);
+  protected executionCount = 0;
 
   protected dataListener: Consumer<string> = () => {};
-  protected exitListener: Callback;
+  protected exitListener: Callback<void>;
 
   private prevInput: number;
 
   constructor(private readonly opt?: TerdOpt) {
     super(opt?.printBanner, opt?.printPrompt);
     this.registerKeyHandlers();
+    this.executor.before('execute', () => {
+      this.executionCount++;
+    });
+    this.executor.after('execute', (e) => {
+      this.executionCount--;
+    });
+  }
+
+  private get executing() {
+    return this.executionCount > 0;
   }
 
   private registerKeyHandlers() {
-    const registerKeyHandler = (pattern: string, handler: Callback) =>
+    const registerKeyHandler = (pattern: string, handler: Callback<boolean>) =>
       this.keyHandlers.set(pattern, handler);
     const newlineHandler = () => {
+      if (this.executing) {
+        return true;
+      }
+
       if (this.prevInput === 3) {
         this.print('\n');
         this.prompt();
@@ -37,6 +51,10 @@ export default class Terd extends OutputControl {
     registerKeyHandler('\n', newlineHandler);
     // ctrl c
     registerKeyHandler('\x03', () => {
+      if (this.executing) {
+        this.executor.killExecution();
+        return;
+      }
       if (this.inputBuffer.hasInput()) {
         this.clearInput();
       } else if (this.prevInput == 3) {
@@ -60,7 +78,7 @@ export default class Terd extends OutputControl {
   }
 
   public on(event: 'data', listener: Consumer<string>): void;
-  public on(event: 'exit', listener: Callback): void;
+  public on(event: 'exit', listener: Callback<void>): void;
   public on(event: string, listener: any) {
     if (!listener) {
       throw new Error('event listener is ' + listener);
@@ -81,13 +99,18 @@ export default class Terd extends OutputControl {
     this.executor.close(true);
   }
 
-  private processKey(keystroke: Buffer) {
-    // console.log(keystroke)
+  protected processKey(keystroke: Buffer) {
     const handler = this.keyHandlers.get(keystroke.toString());
-    if (handler) {
-      handler();
+    if (this.executing) {
+      if (!handler || handler()) {
+        this.executor.write(keystroke.toString());
+      }
     } else {
-      this.inputBuffer.push(keystroke);
+      if (handler) {
+        handler();
+      } else {
+        this.inputBuffer.push(keystroke);
+      }
     }
     this.prevInput = keystroke[0];
   }
@@ -99,7 +122,15 @@ export default class Terd extends OutputControl {
       this.histories.push(input);
       const cmd = parseCommand(input);
       this.executor.execute(cmd).then((code) => {
-        this.prompt(code === 0);
+        // if (code !== 0) {
+        //   this.executor.execute(parseCommand('which ' + cmd.exec)).then(() => {
+        //     this.prompt(code !== 0);
+        //   })
+        //   // this.print(chalk.red('command exited with ' + code) + '\r\n');
+        // } else {
+        //   this.prompt(code !== 0);
+        // }
+        this.prompt(code !== 0);
       });
     }
   }

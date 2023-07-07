@@ -1,1 +1,4 @@
 # Terd
+
+- cwd
+- stderr

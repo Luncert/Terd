@@ -94,10 +94,12 @@ export class ChildProcessCommandExecutor extends BasicCommandExecutor {
 export class PtyCommandExecutor extends BasicCommandExecutor {
 
   private layout = {cols: process.stdout.columns, rows: process.stdout.rows};
-  private procs = new Map<number, IPty>();
+  private procs: IPty[] = [];
 
   write(s: string): void {
-    this.procs.forEach((proc) => proc.write(s));
+    if (this.procs.length > 0) {
+      this.procs[this.procs.length - 1].write(s);
+    }
   }
 
   execute(cmd: Command): Promise<number> {
@@ -108,7 +110,7 @@ export class PtyCommandExecutor extends BasicCommandExecutor {
         name: cmd.raw,
         cols: this.layout.cols,
         rows: this.layout.rows,
-        cwd: os.homedir(),
+        cwd: this.cwd,
         env: process.env
       });
 
@@ -117,13 +119,28 @@ export class PtyCommandExecutor extends BasicCommandExecutor {
       }
 
       proc.onExit((e) => {
-        this.procs.delete(proc.pid);
+        this.deleteProcInfo(proc.pid);
         this.afterExecuteListener && this.afterExecuteListener(e);
         resolve(e.exitCode);
       });
 
-      this.procs.set(proc.pid, proc);
+      this.procs.push(proc);
     });
+  }
+
+  killExecution() {
+    if (this.procs.length > 0) {
+      this.procs[this.procs.length - 1].kill('SIGINT');
+    }
+  }
+
+  private deleteProcInfo(pid: number) {
+    for (let i = 0; i < this.procs.length; i++) {
+      if (this.procs[i].pid === pid) {
+        this.procs.splice(i, 1);
+        break;
+      }
+    }
   }
 
   resize(cols: number, rows: number) {
@@ -135,12 +152,12 @@ export class PtyCommandExecutor extends BasicCommandExecutor {
   close(force?: boolean): void {
     if (!force) {
       const t = setInterval(() => {
-        if (this.procs.size == 0) {
+        if (this.procs.length == 0) {
           clearInterval(t);
         }
       }, 100)
     }
     this.procs.forEach(p => p.kill());
-    this.procs.clear();
+    this.procs = [];
   }
 }

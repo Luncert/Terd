@@ -36,4 +36,4 @@ export interface BuiltinCommand {
   process(ctx: CommandContext, namedArgs: Map<string, string>, namelessArgs: string[]): void;
 }
 
-export type Callback = () => void;
+export type Callback<R> = () => R | void;

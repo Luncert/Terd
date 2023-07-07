@@ -33,9 +33,10 @@ export default abstract class OutputControl {
     }
   }
 
-  protected prompt(lastExecSucceed?: boolean) {
+  protected prompt(lastExecFailed?: boolean) {
     if (this.printPrompt) {
-      const str = chalk.cyan(this.cwd()) + (lastExecSucceed ? chalk.greenBright('>') : chalk.red('>'))
+      const str = chalk.cyan(this.cwd())
+        + (lastExecFailed ? chalk.red('>') : chalk.greenBright('>'))
       this.print(str);
     }
   }
