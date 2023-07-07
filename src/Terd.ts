@@ -16,6 +16,7 @@ export default class Terd extends OutputControl {
   protected exitListener: Callback<void>;
 
   private prevInput: number;
+  private lastOutput: number;
 
   constructor(private readonly opt?: TerdOpt) {
     super(opt?.printBanner, opt?.printPrompt);
@@ -23,8 +24,13 @@ export default class Terd extends OutputControl {
     this.executor.before('execute', () => {
       this.executionCount++;
     });
+    this.executor.on('data', (s) => this.print(s));
     this.executor.after('execute', (e) => {
       this.executionCount--;
+
+      if (this.lastOutput !== 10) {
+        this.print('\n');
+      }
     });
   }
 
@@ -36,10 +42,6 @@ export default class Terd extends OutputControl {
     const registerKeyHandler = (pattern: string, handler: Callback<boolean>) =>
       this.keyHandlers.set(pattern, handler);
     const newlineHandler = () => {
-      if (this.executing) {
-        return true;
-      }
-
       if (this.prevInput === 3) {
         this.print('\n');
         this.prompt();
@@ -51,10 +53,6 @@ export default class Terd extends OutputControl {
     registerKeyHandler('\n', newlineHandler);
     // ctrl c
     registerKeyHandler('\x03', () => {
-      if (this.executing) {
-        this.executor.killExecution();
-        return;
-      }
       if (this.inputBuffer.hasInput()) {
         this.clearInput();
       } else if (this.prevInput == 3) {
@@ -64,7 +62,9 @@ export default class Terd extends OutputControl {
       }
     });
     // ctrl d
-    registerKeyHandler('\x04', () => this.close());
+    registerKeyHandler('\x04', () => {
+      this.close();
+    });
     registerKeyHandler('\x7F', () => this.backspace());
     registerKeyHandler(ASCII.Delete, () => this.delete());
     registerKeyHandler(ASCII.Up, () => this.showPrevInput());
@@ -100,19 +100,17 @@ export default class Terd extends OutputControl {
   }
 
   protected processKey(keystroke: Buffer) {
-    const handler = this.keyHandlers.get(keystroke.toString());
     if (this.executing) {
-      if (!handler || handler()) {
-        this.executor.write(keystroke.toString());
-      }
+      this.executor.write(keystroke.toString());
     } else {
+      const handler = this.keyHandlers.get(keystroke.toString());
       if (handler) {
         handler();
       } else {
         this.inputBuffer.push(keystroke);
       }
+      this.prevInput = keystroke[0];
     }
-    this.prevInput = keystroke[0];
   }
 
   protected commit() {
@@ -137,13 +135,16 @@ export default class Terd extends OutputControl {
 
   protected print(s: number | string | Buffer) {
     if (typeof(s) === 'string') {
+      this.lastOutput = s.charCodeAt(s.length - 1);
       this.dataListener(s);
       return;
     } else if (s instanceof Buffer) {
+      this.lastOutput = s[s.length - 1];
       this.dataListener(s.toString());
       return;
     }
 
+    this.lastOutput = s;
     this.dataListener(String.fromCharCode(s));
   }
 

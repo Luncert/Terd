@@ -9,8 +9,6 @@ export default class TerdInterface extends Terd {
     protected readonly output: NodeJS.WriteStream = process.stdout) {
     super({ printPrompt: true });
 
-    this.executor.on('data', (s) => this.print(s));
-
     this.input.setRawMode(true);
     this.input.on('data', this.pressKeyBind);
 
