@@ -3,12 +3,14 @@ import InputBuffer from "./InputBuffer";
 import chalk from 'chalk';
 import fs from 'fs';
 import path from "path";
+import InputHistory from "./InputHistory";
 
 const PackageInfo = require('../package.json') as any;
 
 export default abstract class OutputControl {
 
   protected readonly inputBuffer = new InputBuffer(this.print.bind(this));
+  protected readonly histories = new InputHistory();
 
   constructor(
     private readonly printBanner?: boolean,
@@ -42,5 +44,32 @@ export default abstract class OutputControl {
     if (this.inputBuffer.pop() !== undefined) {
       this.print(`${CSI.CUB(1)}${CSI.DCH(1)}`);
     }
+  }
+
+  protected delete() {
+    if (this.inputBuffer.moveCursor(1)) {
+      this.inputBuffer.pop();
+    }
+  }
+
+  protected showPrevInput() {
+    if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+      const history = this.histories.previous;
+      if (history !== undefined) {
+        this.inputBuffer.replace(history);
+      }
+    }
+  }
+
+  protected showNextInput() {
+    if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
+      const history = this.histories.next;
+      this.inputBuffer.replace(history);
+    }
+  }
+
+  protected clearInput() {
+    this.inputBuffer.clear();
+    this.histories.resetCursors();
   }
 }

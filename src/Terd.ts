@@ -7,7 +7,6 @@ import OutputControl from "./OutputControl";
 
 export default class Terd extends OutputControl {
 
-  protected readonly histories = new InputHistory();
   protected readonly keyHandlers: Map<string, Callback> = new Map();
   protected readonly executor = new PtyCommandExecutor();
   protected readonly pressKeyBind = this.processKey.bind(this);
@@ -36,32 +35,22 @@ export default class Terd extends OutputControl {
     };
     registerKeyHandler('\r', newlineHandler);
     registerKeyHandler('\n', newlineHandler);
+    // ctrl c
     registerKeyHandler('\x03', () => {
       if (this.inputBuffer.hasInput()) {
-        this.inputBuffer.clear();
-        this.histories.resetCursors();
+        this.clearInput();
       } else if (this.prevInput == 3) {
         this.close();
       } else {
         this.print('\n(To exit, press Ctrl+C again or Ctrl+D)');
       }
-    }); // ctrl c
-    registerKeyHandler('\x04', () => this.close()); // ctrl d
+    });
+    // ctrl d
+    registerKeyHandler('\x04', () => this.close());
     registerKeyHandler('\x7F', () => this.backspace());
-    registerKeyHandler(ASCII.Up, () => {
-      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
-        const history = this.histories.previous;
-        if (history !== undefined) {
-          this.inputBuffer.replace(history);
-        }
-      }
-    });
-    registerKeyHandler(ASCII.Down, () => {
-      if (!this.inputBuffer.hasInput() || this.inputBuffer.toString() === this.histories.current) {
-        const history = this.histories.next;
-        this.inputBuffer.replace(history);
-      }
-    });
+    registerKeyHandler(ASCII.Delete, () => this.delete());
+    registerKeyHandler(ASCII.Up, () => this.showPrevInput());
+    registerKeyHandler(ASCII.Down, () => this.showNextInput());
     registerKeyHandler(ASCII.Backward, () => this.inputBuffer.moveCursor(-1));
     registerKeyHandler(ASCII.Forward, () => this.inputBuffer.moveCursor(1));
   }
@@ -93,6 +82,7 @@ export default class Terd extends OutputControl {
   }
 
   private processKey(keystroke: Buffer) {
+    // console.log(keystroke)
     const handler = this.keyHandlers.get(keystroke.toString());
     if (handler) {
       handler();
