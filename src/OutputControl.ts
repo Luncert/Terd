@@ -1,4 +1,4 @@
-import { CSI } from "./ASCII";
+import { CSI, TextStyles } from "./ASCII";
 import InputBuffer from "./InputBuffer";
 import chalk from 'chalk';
 import fs from 'fs';
@@ -35,8 +35,12 @@ export default abstract class OutputControl {
 
   protected prompt(lastExecFailed?: boolean) {
     if (this.printPrompt) {
-      const str = chalk.cyan(this.cwd())
-        + (lastExecFailed ? chalk.red('>') : chalk.greenBright('>'))
+      const colored = lastExecFailed ? chalk.red : chalk.greenBright;
+      const bgColored = lastExecFailed ? chalk.bgRed : chalk.bgGreenBright;
+      if (lastExecFailed) {
+
+      }
+      const str = chalk.cyan(this.cwd()) + colored(' \u25A0 ')
       this.print(str);
     }
   }

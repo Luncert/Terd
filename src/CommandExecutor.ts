@@ -20,6 +20,8 @@ abstract class BasicCommandExecutor implements ICommandExecutor {
     return this._cwd;
   }
 
+  abstract get executing(): boolean;
+
   before(event: 'execute', listener: BeforeExecuteListener): IDisposable {
     this.beforeExecuteListener = listener;
     return { dispose: () => this.beforeExecuteListener = undefined };
@@ -41,6 +43,10 @@ abstract class BasicCommandExecutor implements ICommandExecutor {
 }
 
 export class ChildProcessCommandExecutor extends BasicCommandExecutor {
+
+  get executing(): boolean {
+    throw new Error('Method not implemented.');
+  }
 
   private processes: Map<number, child_process.ChildProcessWithoutNullStreams>
     = new Map();
@@ -95,6 +101,10 @@ export class PtyCommandExecutor extends BasicCommandExecutor {
 
   private layout = {cols: process.stdout.columns, rows: process.stdout.rows};
   private procs: IPty[] = [];
+
+  get executing(): boolean {
+    return this.procs.length > 0;
+  }
 
   write(s: string): void {
     if (this.procs.length > 0) {

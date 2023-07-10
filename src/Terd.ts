@@ -10,7 +10,6 @@ export default class Terd extends OutputControl {
 
   protected readonly keyHandlers: Map<string, Callback<boolean>> = new Map();
   protected readonly executor = new PtyCommandExecutor();
-  protected executionCount = 0;
 
   protected dataListener: Consumer<string> = () => {};
   protected exitListener: Callback<void>;
@@ -22,20 +21,13 @@ export default class Terd extends OutputControl {
     super(opt?.printBanner, opt?.printPrompt);
     this.registerKeyHandlers();
     this.executor.before('execute', () => {
-      this.executionCount++;
     });
     this.executor.on('data', (s) => this.print(s));
     this.executor.after('execute', (e) => {
-      this.executionCount--;
-
       if (this.lastOutput !== 10) {
         this.print('\n');
       }
     });
-  }
-
-  private get executing() {
-    return this.executionCount > 0;
   }
 
   private registerKeyHandlers() {
@@ -100,7 +92,7 @@ export default class Terd extends OutputControl {
   }
 
   protected processKey(keystroke: Buffer) {
-    if (this.executing) {
+    if (this.executor.executing) {
       this.executor.write(keystroke.toString());
     } else {
       const handler = this.keyHandlers.get(keystroke.toString());
