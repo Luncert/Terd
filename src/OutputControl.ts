@@ -17,7 +17,7 @@ export default abstract class OutputControl {
     private readonly printPrompt?: boolean) {
   }
 
-  protected abstract cwd(): string;
+  protected abstract pwd(): string;
 
   protected abstract print(s: number | string | Buffer): void;
 
@@ -35,12 +35,10 @@ export default abstract class OutputControl {
 
   protected prompt(lastExecFailed?: boolean) {
     if (this.printPrompt) {
+      // https://www.w3.org/TR/xml-entity-names/025.html
       const colored = lastExecFailed ? chalk.red : chalk.greenBright;
-      const bgColored = lastExecFailed ? chalk.bgRed : chalk.bgGreenBright;
-      if (lastExecFailed) {
-
-      }
-      const str = chalk.cyan(this.cwd()) + colored(' \u25A0 ')
+      // const bgColored = lastExecFailed ? chalk.bgRed : chalk.bgGreenBright;
+      const str = colored('\u25B6 ') + chalk.cyan(this.pwd()) + ' ';
       this.print(str);
     }
   }

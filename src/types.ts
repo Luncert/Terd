@@ -1,10 +1,8 @@
 import { IDisposable } from "node-pty";
 import { Command } from "./grammar";
-import { CommandContext } from "./grammar/TerdParser";
+import CommandContext from "./builtin/CommandContext";
 
 export interface ICommandExecutor {
-
-  get cwd(): string;
 
   before(event: 'execute', listener: any): IDisposable;
 
@@ -23,6 +21,11 @@ export type AfterExecuteListener = (e: { exitCode: number, signal?: number }) =>
 
 export type Consumer<T> = (e: T) => void;
 
+export interface Output {
+
+  write(s: string): void;
+}
+
 export type OutputListener = (chunk: Buffer | string) => void;
 
 export interface TerdOpt {
@@ -33,7 +36,7 @@ export interface TerdOpt {
 export interface BuiltinCommand {
   name(): string;
   usage(): string;
-  process(ctx: CommandContext, namedArgs: Map<string, string>, namelessArgs: string[]): void;
+  process(ctx: CommandContext, args: string[]): void;
 }
 
 export type Callback<R> = () => R | void;

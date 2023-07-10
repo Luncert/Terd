@@ -5,11 +5,14 @@ import { ASCII } from "./ASCII";
 import { Callback, Consumer, TerdOpt } from "./types";
 import OutputControl from "./OutputControl";
 import chalk from "chalk";
+import CommandContext from "./builtin/CommandContext";
+import executeBuiltinCommand from "./builtin/Builtins";
 
 export default class Terd extends OutputControl {
 
+  protected commandContext = new CommandContext();
   protected readonly keyHandlers: Map<string, Callback<boolean>> = new Map();
-  protected readonly executor = new PtyCommandExecutor();
+  protected readonly executor = new PtyCommandExecutor(this.commandContext);
 
   protected dataListener: Consumer<string> = () => {};
   protected exitListener: Callback<void>;
@@ -19,6 +22,7 @@ export default class Terd extends OutputControl {
 
   constructor(private readonly opt?: TerdOpt) {
     super(opt?.printBanner, opt?.printPrompt);
+    this.commandContext.pwd = process.cwd().replace(/\\/g, '/');
     this.registerKeyHandlers();
     this.executor.before('execute', () => {
     });
@@ -111,17 +115,16 @@ export default class Terd extends OutputControl {
       this.inputBuffer.pack();
       this.histories.push(input);
       const cmd = parseCommand(input);
-      this.executor.execute(cmd).then((code) => {
-        // if (code !== 0) {
-        //   this.executor.execute(parseCommand('which ' + cmd.exec)).then(() => {
-        //     this.prompt(code !== 0);
-        //   })
-        //   // this.print(chalk.red('command exited with ' + code) + '\r\n');
-        // } else {
-        //   this.prompt(code !== 0);
-        // }
-        this.prompt(code !== 0);
-      });
+      executeBuiltinCommand(this.commandContext, cmd)
+        .then(() => this.prompt(false))
+        .catch(code => {
+          if (code == -2) {
+            // didn't hit builtin command
+            this.executor.execute(cmd).then((code) => this.prompt(code !== 0));
+          } else {
+            this.prompt(true);
+          }
+        })
     }
   }
 
@@ -140,7 +143,7 @@ export default class Terd extends OutputControl {
     this.dataListener(String.fromCharCode(s));
   }
 
-  protected cwd(): string {
-    return this.executor.cwd;
+  protected pwd(): string {
+    return this.commandContext.pwd;
   }
 }

@@ -1,5 +1,5 @@
 # Terd
 
-- cwd
-- stderr
+- stderr X
+
 - newline after termination

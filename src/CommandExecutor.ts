@@ -4,20 +4,16 @@ import { Command } from './grammar';
 import { AfterExecuteListener, BeforeExecuteListener, Consumer, ICommandExecutor } from './types';
 import { IDisposable, IPty, spawn } from 'node-pty';
 import { resolve } from 'path';
+import CommandContext from './builtin/CommandContext';
 
 abstract class BasicCommandExecutor implements ICommandExecutor {
 
-  protected _cwd: string;
   protected beforeExecuteListener: BeforeExecuteListener | undefined;
   protected dataListener: Consumer<string> | undefined;
   protected afterExecuteListener: AfterExecuteListener | undefined;
 
-  constructor() {
-    this._cwd = process.cwd().replace(/\\/g, '/');
-  }
+  constructor(protected readonly commandContext: CommandContext) {
 
-  get cwd(): string {
-    return this._cwd;
   }
 
   abstract get executing(): boolean;
@@ -54,8 +50,9 @@ export class ChildProcessCommandExecutor extends BasicCommandExecutor {
   constructor(
     private readonly stdin: NodeJS.ReadStream,
     private readonly stdout: NodeJS.WriteStream,
-    private readonly stderr: NodeJS.WriteStream) {
-    super();
+    private readonly stderr: NodeJS.WriteStream,
+    commandContext: CommandContext) {
+    super(commandContext);
   }
 
   write(s: string): void {
@@ -67,7 +64,7 @@ export class ChildProcessCommandExecutor extends BasicCommandExecutor {
       this.beforeExecuteListener && this.beforeExecuteListener();
 
       const proc = child_process.spawn(cmd.exec, cmd.args, {
-        cwd: this.cwd,
+        cwd: this.commandContext.pwd,
         stdio: 'pipe', // can't use stream directly, stream will be closed by proc
         shell: false
       });
@@ -120,7 +117,7 @@ export class PtyCommandExecutor extends BasicCommandExecutor {
         name: cmd.raw,
         cols: this.layout.cols,
         rows: this.layout.rows,
-        cwd: this.cwd,
+        cwd: this.commandContext.pwd,
         env: process.env
       });
 

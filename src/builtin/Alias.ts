@@ -1,5 +1,6 @@
-import CommandContext from "../CommandContext";
-import BuiltinCommandError, { InvalidUsageError } from "./Errors";
+import CommandContext from "./CommandContext";
+import { BuiltinCommand } from "../types";
+import { InvalidUsageError } from "./Errors";
 
 export class AliasCommand implements BuiltinCommand {
 
@@ -11,12 +12,12 @@ export class AliasCommand implements BuiltinCommand {
     return `alias [name[=value] ...]`
   }
 
-  process(ctx: CommandContext, namedArgs: Map<string, string>, namelessArgs: string[]) {
-    if (namedArgs.size > 0) {
+  process(ctx: CommandContext, args: string[]) {
+    if (args.length > 0) {
       throw new InvalidUsageError();
     }
 
-    for (const p of namelessArgs) {
+    for (const p of args) {
       const [k, v] = this.parsePair(p);
       if (k) {
         ctx.env.createAlias(k, v);

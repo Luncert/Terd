@@ -1,8 +1,7 @@
 grammar Terd;
 
 command
-  : SPACES? executable SPACES? EOF
-  | SPACES? executable (SPACES arguments)? EOF
+  : SPACES? executable SPACES arguments SPACES? EOF
   ;
 
 executable
