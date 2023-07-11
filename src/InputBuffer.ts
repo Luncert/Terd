@@ -270,7 +270,7 @@ export default class InputBuffer {
 
     const toAdd: number[] = [];
     items.forEach(code => {
-      if (code == 9) {
+      if (code === 9) {
         toAdd.push(32, 32, 32, 32);
       } else {
         toAdd.push(code);
