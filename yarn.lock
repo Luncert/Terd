@@ -2315,11 +2315,6 @@
   "resolved" "https://registry.npmjs.org/kind-of/-/kind-of-6.0.3.tgz"
   "version" "6.0.3"
 
-"kleur@^4.1.4":
-  "integrity" "sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ=="
-  "resolved" "https://registry.npmjs.org/kleur/-/kleur-4.1.5.tgz"
-  "version" "4.1.5"
-
 "lcid@^2.0.0":
   "integrity" "sha512-avPEb8P8EGnwXKClwsNUgryVjllcRqtMYa49NTsbQagYuT1DcXnl1915oxWjoyGrXR6zH/Y0Zc96xWsPcoDKeA=="
   "resolved" "https://registry.npmjs.org/lcid/-/lcid-2.0.0.tgz"
@@ -3103,13 +3098,6 @@
   "integrity" "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="
   "resolved" "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz"
   "version" "1.2.1"
-
-"pretty-print-error@^1.1.1":
-  "integrity" "sha512-xl5LI8vnfNExJzIpCeyoTVGHsKCyX5GSrK8IPoy6FJZQotqveE41guzwwPTEAWLJAcuq1s5xz4EbGQvM/KGwjw=="
-  "resolved" "https://registry.npmjs.org/pretty-print-error/-/pretty-print-error-1.1.1.tgz"
-  "version" "1.1.1"
-  dependencies:
-    "kleur" "^4.1.4"
 
 "process-nextick-args@~2.0.0":
   "integrity" "sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag=="

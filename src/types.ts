@@ -40,3 +40,5 @@ export interface BuiltinCommand {
 }
 
 export type Callback<R> = () => R | void;
+
+export type Printer = (s: number | string | Buffer) => void;

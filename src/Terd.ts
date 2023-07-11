@@ -1,12 +1,10 @@
 import { PtyCommandExecutor } from "./CommandExecutor";
 import { parseCommand } from "./grammar";
-import InputHistory from "./InputHistory";
 import { ASCII } from "./ASCII";
 import { Callback, Consumer, TerdOpt } from "./types";
 import OutputControl from "./OutputControl";
-import chalk from "chalk";
 import CommandContext from "./builtin/CommandContext";
-import executeBuiltinCommand from "./builtin/Builtins";
+import executeBuiltinCommand, { searchCommand } from "./builtin/Builtins";
 
 export default class Terd extends OutputControl {
 
@@ -19,6 +17,7 @@ export default class Terd extends OutputControl {
 
   private prevInput: number;
   private lastOutput: number;
+  private printer = this.print.bind(this);
 
   constructor(private readonly opt?: TerdOpt) {
     super(opt?.printBanner, opt?.printPrompt);
@@ -60,6 +59,11 @@ export default class Terd extends OutputControl {
     // ctrl d
     registerKeyHandler('\x04', () => {
       this.close();
+    });
+    registerKeyHandler('\x09', () => {
+      if (!this.autoComplete()) {
+        this.inputBuffer.push(9);
+      }
     });
     registerKeyHandler('\x7F', () => this.backspace());
     registerKeyHandler(ASCII.Delete, () => this.delete());
@@ -145,5 +149,9 @@ export default class Terd extends OutputControl {
 
   protected pwd(): string {
     return this.commandContext.pwd;
+  }
+
+  protected searchCommand(input: string): string[] {
+    return searchCommand(input);
   }
 }

@@ -1,4 +1,3 @@
-import { CSI, TextStyles } from "./ASCII";
 import InputBuffer from "./InputBuffer";
 import chalk from 'chalk';
 import fs from 'fs';
@@ -11,6 +10,7 @@ export default abstract class OutputControl {
 
   protected readonly inputBuffer = new InputBuffer(this.print.bind(this));
   protected readonly histories = new InputHistory();
+  private prevAutoComplete = '';
 
   constructor(
     private readonly printBanner?: boolean,
@@ -18,7 +18,6 @@ export default abstract class OutputControl {
   }
 
   protected abstract pwd(): string;
-
   protected abstract print(s: number | string | Buffer): void;
 
   protected banner() {
@@ -44,9 +43,7 @@ export default abstract class OutputControl {
   }
 
   protected backspace() {
-    if (this.inputBuffer.pop() !== undefined) {
-      this.print(`${CSI.CUB(1)}${CSI.DCH(1)}`);
-    }
+    this.inputBuffer.pop();
   }
 
   protected delete() {
@@ -75,4 +72,33 @@ export default abstract class OutputControl {
     this.inputBuffer.clear();
     this.histories.resetCursors();
   }
+
+  protected autoComplete(): boolean {
+    if (this.inputBuffer.getTextCursor() == 0) {
+      return false;
+    }
+
+
+    const input = this.inputBuffer.getLastWord();
+    const candidates = this.searchCommand(input);
+    let hint = this.prevAutoComplete;
+    for (const c of candidates) {
+      if (c !== this.prevAutoComplete) {
+        hint = c;
+        break;
+      }
+    }
+
+    hint = hint.replace(input, '');
+
+    if (hint === this.inputBuffer.getHint()) {
+      this.inputBuffer.push(Buffer.from(hint));
+    } else {
+      this.inputBuffer.setHint(hint);
+    }
+
+    return true;
+  }
+
+  protected abstract searchCommand(input: string): string[];
 }

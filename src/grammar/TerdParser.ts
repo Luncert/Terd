@@ -99,21 +99,29 @@ export class TerdParser extends Parser {
 
 			this.state = 13;
 			this.executable();
-			this.state = 14;
-			this.match(TerdParser.SPACES);
-			this.state = 15;
-			this.arguments();
-			this.state = 17;
+			this.state = 16;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 1, this._ctx) ) {
+			case 1:
+				{
+				this.state = 14;
+				this.match(TerdParser.SPACES);
+				this.state = 15;
+				this.arguments();
+				}
+				break;
+			}
+			this.state = 19;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			if (_la === TerdParser.SPACES) {
 				{
-				this.state = 16;
+				this.state = 18;
 				this.match(TerdParser.SPACES);
 				}
 			}
 
-			this.state = 19;
+			this.state = 21;
 			this.match(TerdParser.EOF);
 			}
 		}
@@ -138,7 +146,7 @@ export class TerdParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 21;
+			this.state = 23;
 			this.match(TerdParser.PATTERN);
 			}
 		}
@@ -164,25 +172,25 @@ export class TerdParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 23;
+			this.state = 25;
 			this.argument();
-			this.state = 28;
+			this.state = 30;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 2, this._ctx);
+			_alt = this.interpreter.adaptivePredict(this._input, 3, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 24;
+					this.state = 26;
 					this.match(TerdParser.SPACES);
-					this.state = 25;
+					this.state = 27;
 					this.argument();
 					}
 					}
 				}
-				this.state = 30;
+				this.state = 32;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 2, this._ctx);
+				_alt = this.interpreter.adaptivePredict(this._input, 3, this._ctx);
 			}
 			}
 		}
@@ -207,19 +215,19 @@ export class TerdParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 33;
+			this.state = 35;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case TerdParser.T__0:
 			case TerdParser.T__1:
 				{
-				this.state = 31;
+				this.state = 33;
 				this.option();
 				}
 				break;
 			case TerdParser.PATTERN:
 				{
-				this.state = 32;
+				this.state = 34;
 				this.match(TerdParser.PATTERN);
 				}
 				break;
@@ -250,7 +258,7 @@ export class TerdParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 35;
+			this.state = 37;
 			_la = this._input.LA(1);
 			if (!(_la === TerdParser.T__0 || _la === TerdParser.T__1)) {
 			this._errHandler.recoverInline(this);
@@ -262,7 +270,7 @@ export class TerdParser extends Parser {
 				this._errHandler.reportMatch(this);
 				this.consume();
 			}
-			this.state = 36;
+			this.state = 38;
 			this.match(TerdParser.PATTERN);
 			}
 		}
@@ -282,24 +290,25 @@ export class TerdParser extends Parser {
 	}
 
 	public static readonly _serializedATN: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\n)\x04\x02\t" +
+		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\n+\x04\x02\t" +
 		"\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x03\x02\x05" +
-		"\x02\x0E\n\x02\x03\x02\x03\x02\x03\x02\x03\x02\x05\x02\x14\n\x02\x03\x02" +
-		"\x03\x02\x03\x03\x03\x03\x03\x04\x03\x04\x03\x04\x07\x04\x1D\n\x04\f\x04" +
-		"\x0E\x04 \v\x04\x03\x05\x03\x05\x05\x05$\n\x05\x03\x06\x03\x06\x03\x06" +
-		"\x03\x06\x02\x02\x02\x07\x02\x02\x04\x02\x06\x02\b\x02\n\x02\x02\x03\x03" +
-		"\x02\x03\x04\x02\'\x02\r\x03\x02\x02\x02\x04\x17\x03\x02\x02\x02\x06\x19" +
-		"\x03\x02\x02\x02\b#\x03\x02\x02\x02\n%\x03\x02\x02\x02\f\x0E\x07\t\x02" +
-		"\x02\r\f\x03\x02\x02\x02\r\x0E\x03\x02\x02\x02\x0E\x0F\x03\x02\x02\x02" +
-		"\x0F\x10\x05\x04\x03\x02\x10\x11\x07\t\x02\x02\x11\x13\x05\x06\x04\x02" +
-		"\x12\x14\x07\t\x02\x02\x13\x12\x03\x02\x02\x02\x13\x14\x03\x02\x02\x02" +
-		"\x14\x15\x03\x02\x02\x02\x15\x16\x07\x02\x02\x03\x16\x03\x03\x02\x02\x02" +
-		"\x17\x18\x07\x05\x02\x02\x18\x05\x03\x02\x02\x02\x19\x1E\x05\b\x05\x02" +
-		"\x1A\x1B\x07\t\x02\x02\x1B\x1D\x05\b\x05\x02\x1C\x1A\x03\x02\x02\x02\x1D" +
-		" \x03\x02\x02\x02\x1E\x1C\x03\x02\x02\x02\x1E\x1F\x03\x02\x02\x02\x1F" +
-		"\x07\x03\x02\x02\x02 \x1E\x03\x02\x02\x02!$\x05\n\x06\x02\"$\x07\x05\x02" +
-		"\x02#!\x03\x02\x02\x02#\"\x03\x02\x02\x02$\t\x03\x02\x02\x02%&\t\x02\x02" +
-		"\x02&\'\x07\x05\x02\x02\'\v\x03\x02\x02\x02\x06\r\x13\x1E#";
+		"\x02\x0E\n\x02\x03\x02\x03\x02\x03\x02\x05\x02\x13\n\x02\x03\x02\x05\x02" +
+		"\x16\n\x02\x03\x02\x03\x02\x03\x03\x03\x03\x03\x04\x03\x04\x03\x04\x07" +
+		"\x04\x1F\n\x04\f\x04\x0E\x04\"\v\x04\x03\x05\x03\x05\x05\x05&\n\x05\x03" +
+		"\x06\x03\x06\x03\x06\x03\x06\x02\x02\x02\x07\x02\x02\x04\x02\x06\x02\b" +
+		"\x02\n\x02\x02\x03\x03\x02\x03\x04\x02*\x02\r\x03\x02\x02\x02\x04\x19" +
+		"\x03\x02\x02\x02\x06\x1B\x03\x02\x02\x02\b%\x03\x02\x02\x02\n\'\x03\x02" +
+		"\x02\x02\f\x0E\x07\t\x02\x02\r\f\x03\x02\x02\x02\r\x0E\x03\x02\x02\x02" +
+		"\x0E\x0F\x03\x02\x02\x02\x0F\x12\x05\x04\x03\x02\x10\x11\x07\t\x02\x02" +
+		"\x11\x13\x05\x06\x04\x02\x12\x10\x03\x02\x02\x02\x12\x13\x03\x02\x02\x02" +
+		"\x13\x15\x03\x02\x02\x02\x14\x16\x07\t\x02\x02\x15\x14\x03\x02\x02\x02" +
+		"\x15\x16\x03\x02\x02\x02\x16\x17\x03\x02\x02\x02\x17\x18\x07\x02\x02\x03" +
+		"\x18\x03\x03\x02\x02\x02\x19\x1A\x07\x05\x02\x02\x1A\x05\x03\x02\x02\x02" +
+		"\x1B \x05\b\x05\x02\x1C\x1D\x07\t\x02\x02\x1D\x1F\x05\b\x05\x02\x1E\x1C" +
+		"\x03\x02\x02\x02\x1F\"\x03\x02\x02\x02 \x1E\x03\x02\x02\x02 !\x03\x02" +
+		"\x02\x02!\x07\x03\x02\x02\x02\" \x03\x02\x02\x02#&\x05\n\x06\x02$&\x07" +
+		"\x05\x02\x02%#\x03\x02\x02\x02%$\x03\x02\x02\x02&\t\x03\x02\x02\x02\'" +
+		"(\t\x02\x02\x02()\x07\x05\x02\x02)\v\x03\x02\x02\x02\x07\r\x12\x15 %";
 	public static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!TerdParser.__ATN) {
@@ -315,6 +324,7 @@ export class CommandContext extends ParserRuleContext {
 	public executable(): ExecutableContext {
 		return this.getRuleContext(0, ExecutableContext);
 	}
+	public EOF(): TerminalNode { return this.getToken(TerdParser.EOF, 0); }
 	public SPACES(): TerminalNode[];
 	public SPACES(i: number): TerminalNode;
 	public SPACES(i?: number): TerminalNode | TerminalNode[] {
@@ -324,10 +334,9 @@ export class CommandContext extends ParserRuleContext {
 			return this.getToken(TerdParser.SPACES, i);
 		}
 	}
-	public arguments(): ArgumentsContext {
-		return this.getRuleContext(0, ArgumentsContext);
+	public arguments(): ArgumentsContext | undefined {
+		return this.tryGetRuleContext(0, ArgumentsContext);
 	}
-	public EOF(): TerminalNode { return this.getToken(TerdParser.EOF, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}

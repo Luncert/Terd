@@ -2,4 +2,6 @@
 
 - stderr X
 
-- newline after termination
+- auto completion:
+  - pw?
+- history: ls, s
