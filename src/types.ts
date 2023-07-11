@@ -24,6 +24,8 @@ export type Consumer<T> = (e: T) => void;
 export interface Output {
 
   write(s: string): void;
+
+  writeln(s: string): void;
 }
 
 export type OutputListener = (chunk: Buffer | string) => void;
@@ -31,6 +33,7 @@ export type OutputListener = (chunk: Buffer | string) => void;
 export interface TerdOpt {
   printPrompt?: boolean;
   printBanner?: boolean;
+  disableExit?: boolean;
 }
 
 export interface BuiltinCommand {

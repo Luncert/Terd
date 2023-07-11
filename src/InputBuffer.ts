@@ -13,7 +13,7 @@ function isWhitespace(c: number): boolean {
 
 function rerender() {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    target[propertyKey].rerendering = true;
+    target.rerendering = true;
   };
 }
 
@@ -33,7 +33,6 @@ export default class InputBuffer {
   insertMode = false;
 
   constructor(private readonly printer: Printer) {
-    // Object.keys(this)
     this.intercept();
   }
 
@@ -148,7 +147,7 @@ export default class InputBuffer {
     } else {
       this.spliceText(0, ...c);
       this.buf.splice(this.cursor, 0, ...c);
-      this.cursor++;
+      this.cursor += c.length;
     }
   }
 

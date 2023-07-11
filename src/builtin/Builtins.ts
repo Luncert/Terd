@@ -54,17 +54,17 @@ add('cd', 'Change current directory to the one specified by Argument parameter.'
       ctx.pwd = newPwd;
       return 0;
     }
-    ctx.println(`cannot access ${newPwd}`);
+    ctx.writeln(`cannot access ${newPwd}`);
     return -1;
   });
 add('echo', 'Writes character strings to standard output.')
   .action((ctx, cmd) => {
-    ctx.println(cmd.argsString);
+    ctx.writeln(cmd.argsString);
     return 0;
   });
 add('pwd', 'Print pwd.')
   .action((ctx, cmd) => {
-    ctx.println(ctx.pwd);
+    ctx.writeln(ctx.pwd);
     return 0;
   });
 add('cls', 'Clear screen.', option('reset', 'r', null, 'reset terminal'))
@@ -123,14 +123,14 @@ export default function executeBuiltinCommand(ctx: CommandContext, cmd: Command)
       }
     } catch (e) {
       if (e instanceof InvalidUsageError) {
-        ctx.println('Invalid usage of command. Usages:')
-        ctx.println(cmdDef.usage);
+        ctx.writeln('Invalid usage of command. Usages:')
+        ctx.writeln(cmdDef.usage);
       } else {
         const err = e as any;
         if (err.message) {
-          ctx.println(err.message);
+          ctx.writeln(err.message);
         } else {
-          ctx.println(err);
+          ctx.writeln(err);
         }
       }
       reject(-1);

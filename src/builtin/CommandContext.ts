@@ -1,17 +1,20 @@
 import Env from "../Env";
-import { Output } from "../types";
+import { Output, Printer } from "../types";
 
 export default class CommandContext implements Output {
 
   public pwd: string;
   public readonly env: Env;
 
-  print(s: string): void {
-    process.stdout.write(s);
+  constructor(private printer: Printer) {
   }
 
-  println(s: string): void {
-    process.stdout.write(s);
-    process.stdout.write('\n');
+  write(s: string): void {
+    this.printer(s);
+  }
+
+  writeln(s: string): void {
+    this.printer(s);
+    this.printer('\n');
   }
 }

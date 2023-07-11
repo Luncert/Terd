@@ -8,16 +8,16 @@ import executeBuiltinCommand, { searchCommand } from "./builtin/Builtins";
 
 export default class Terd extends OutputControl {
 
-  protected commandContext = new CommandContext();
+  private prevInput: number;
+  private lastOutput: number;
+  private printer = this.print.bind(this);
+
+  protected commandContext = new CommandContext(this.printer);
   protected readonly keyHandlers: Map<string, Callback<boolean>> = new Map();
   protected readonly executor = new PtyCommandExecutor(this.commandContext);
 
   protected dataListener: Consumer<string> = () => {};
   protected exitListener: Callback<void>;
-
-  private prevInput: number;
-  private lastOutput: number;
-  private printer = this.print.bind(this);
 
   constructor(private readonly opt?: TerdOpt) {
     super(opt?.printBanner, opt?.printPrompt);
@@ -50,14 +50,22 @@ export default class Terd extends OutputControl {
     registerKeyHandler('\x03', () => {
       if (this.inputBuffer.hasInput()) {
         this.clearInput();
-      } else if (this.prevInput == 3) {
-        this.close();
       } else {
-        this.print('\n(To exit, press Ctrl+C again or Ctrl+D)');
+        if (this.opt.disableExit) {
+          return;
+        }
+        if (this.prevInput == 3) {
+          this.close();
+        } else {
+          this.print('\n(To exit, press Ctrl+C again or Ctrl+D)');
+        }
       }
     });
     // ctrl d
     registerKeyHandler('\x04', () => {
+      if (this.opt.disableExit) {
+        return;
+      }
       this.close();
     });
     registerKeyHandler('\x09', () => {
@@ -93,6 +101,10 @@ export default class Terd extends OutputControl {
       default:
         throw new Error('invalid event ' + event);
     }
+  }
+
+  public resize(cols: number, rows: number) {
+    this.executor.resize(cols, rows);
   }
 
   public close() {
