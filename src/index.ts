@@ -1,4 +1,4 @@
-import { UserInterface } from './Terd'
+import TerdInterface from "./TerdInterface";
 
-let ui = new UserInterface()
-ui.start()
+const terd = new TerdInterface();
+terd.run();

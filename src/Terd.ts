@@ -1,118 +1,157 @@
-import process from 'process';
-import child_process from 'child_process';
-import iconv from 'iconv-lite';
-import chalk from 'chalk';
-import fs from 'fs';
-import path from 'path';
+import { PtyCommandExecutor } from "./CommandExecutor";
+import { parseCommand } from "./grammar";
+import { ASCII } from "./ASCII";
+import { Callback, Consumer, TerdOpt } from "./types";
+import OutputControl from "./OutputControl";
+import CommandContext from "./builtin/CommandContext";
+import executeBuiltinCommand, { searchCommand } from "./builtin/Builtins";
 
-const PackageInfo = require('../package.json');
+export default class Terd extends OutputControl {
 
-type DataHandler = (data: Uint8Array | string) => void
-type CloseListener = () => void
+  protected commandContext = new CommandContext();
+  protected readonly keyHandlers: Map<string, Callback<boolean>> = new Map();
+  protected readonly executor = new PtyCommandExecutor(this.commandContext);
 
-const TERD_MARKER = 'TERD#MARKER'
+  protected dataListener: Consumer<string> = () => {};
+  protected exitListener: Callback<void>;
 
-class Terd {
+  private prevInput: number;
+  private lastOutput: number;
+  private printer = this.print.bind(this);
 
-    private cwd: string
-    private lastSucceed: boolean = true
-    private writeOutput: DataHandler
-    private proc: child_process.ChildProcessWithoutNullStreams
+  constructor(private readonly opt?: TerdOpt) {
+    super(opt?.printBanner, opt?.printPrompt);
+    this.commandContext.pwd = process.cwd().replace(/\\/g, '/');
+    this.registerKeyHandlers();
+    this.executor.before('execute', () => {
+    });
+    this.executor.on('data', (s) => this.print(s));
+    this.executor.after('execute', (e) => {
+      if (this.lastOutput !== 10) {
+        this.print('\n');
+      }
+    });
+  }
 
-    constructor(output: DataHandler, onClose?: CloseListener) {
-        if (!output) {
-            throw new Error('output cannot be null.');
-        }
-        this.writeOutput = output
+  private registerKeyHandlers() {
+    const registerKeyHandler = (pattern: string, handler: Callback<boolean>) =>
+      this.keyHandlers.set(pattern, handler);
+    const newlineHandler = () => {
+      if (this.prevInput === 3) {
+        this.print('\n');
+        this.prompt();
+      } else {
+        this.commit();
+      }
+    };
+    registerKeyHandler('\r', newlineHandler);
+    registerKeyHandler('\n', newlineHandler);
+    // ctrl c
+    registerKeyHandler('\x03', () => {
+      if (this.inputBuffer.hasInput()) {
+        this.clearInput();
+      } else if (this.prevInput == 3) {
+        this.close();
+      } else {
+        this.print('\n(To exit, press Ctrl+C again or Ctrl+D)');
+      }
+    });
+    // ctrl d
+    registerKeyHandler('\x04', () => {
+      this.close();
+    });
+    registerKeyHandler('\x09', () => {
+      if (!this.autoComplete()) {
+        this.inputBuffer.push(9);
+      }
+    });
+    registerKeyHandler('\x7F', () => this.backspace());
+    registerKeyHandler(ASCII.Delete, () => this.delete());
+    registerKeyHandler(ASCII.Up, () => this.showPrevInput());
+    registerKeyHandler(ASCII.Down, () => this.showNextInput());
+    registerKeyHandler(ASCII.Backward, () => this.inputBuffer.moveCursor(-1));
+    registerKeyHandler(ASCII.Forward, () => this.inputBuffer.moveCursor(1));
+  }
 
-        this.cwd = process.cwd().replace(/\\/g, '/')
-        this.proc = child_process.spawn('powershell -NoLogo -Command -', { shell: true })
-        this.proc.stdout.on('data', this.processOutput.bind(this))
-        this.proc.on('close', () => onClose && onClose())
+  public write(input: string) {
+    this.processKey(Buffer.from(input));
+  }
 
-        process.on('SIGINT', () => this.kill())
+  public on(event: 'data', listener: Consumer<string>): void;
+  public on(event: 'exit', listener: Callback<void>): void;
+  public on(event: string, listener: any) {
+    if (!listener) {
+      throw new Error('event listener is ' + listener);
+    }
+    switch (event) {
+      case 'data':
+        this.dataListener = listener;
+        break;
+      case 'exit':
+        this.exitListener = listener;
+        break;
+      default:
+        throw new Error('invalid event ' + event);
+    }
+  }
 
-        this.writeOutput(Buffer.from(this.getPrompt()))
+  public close() {
+    this.executor.close(true);
+  }
+
+  protected processKey(keystroke: Buffer) {
+    if (this.executor.executing) {
+      this.executor.write(keystroke.toString());
+    } else {
+      const handler = this.keyHandlers.get(keystroke.toString());
+      if (handler) {
+        handler();
+      } else {
+        this.inputBuffer.push(keystroke);
+      }
+      this.prevInput = keystroke[0];
+    }
+  }
+
+  protected commit() {
+    const input = this.inputBuffer.toString();
+    if (input) {
+      this.inputBuffer.pack();
+      this.histories.push(input);
+      const cmd = parseCommand(input);
+      executeBuiltinCommand(this.commandContext, cmd)
+        .then(() => this.prompt(false))
+        .catch(code => {
+          if (code == -2) {
+            // didn't hit builtin command
+            this.executor.execute(cmd).then((code) => this.prompt(code !== 0));
+          } else {
+            this.prompt(true);
+          }
+        })
+    }
+  }
+
+  protected print(s: number | string | Buffer) {
+    if (typeof(s) === 'string') {
+      this.lastOutput = s.charCodeAt(s.length - 1);
+      this.dataListener(s);
+      return;
+    } else if (s instanceof Buffer) {
+      this.lastOutput = s[s.length - 1];
+      this.dataListener(s.toString());
+      return;
     }
 
-    public getPrompt(): number[] {
-        let str = chalk.cyan(this.cwd) + (this.lastSucceed ? chalk.greenBright('>') : chalk.red('>'))
-        return str.split('').map((c) => c.charCodeAt(0))
-    }
+    this.lastOutput = s;
+    this.dataListener(String.fromCharCode(s));
+  }
 
-    /**
-     * submit script to Terd to process
-     * @param script string
-     */
-    public process(script: Buffer) {
-        this.proc.stdin.write(script)
-        this.proc.stdin.write(';echo ' + TERD_MARKER + '${pwd};\r\n')
-    }
+  protected pwd(): string {
+    return this.commandContext.pwd;
+  }
 
-    private processOutput(raw: Buffer) {
-        let data = new Array<number>(...raw)
-        let markStart = -1
-        for (let i = 0; i < data.length; i++) {
-            let c = data[i]
-            if (c == TERD_MARKER.charCodeAt(0)) {
-                markStart = i
-            } else if (markStart > -1) {
-                let cursor = i - markStart
-                if (cursor == TERD_MARKER.length) {
-                    for (let j = i; j < data.length; j++) {
-                        if (data[j] == 13) { // '\n'
-                            this.cwd = String.fromCharCode(...data.slice(i, j)).replace(/\\/g, '/') // j - 1 = '\r'
-                            let prompt = this.getPrompt()
-                            i += prompt.length
-                            data.splice(markStart, j + 2 - markStart, ...prompt) // 2 = '\r\n', which has already been included by promt
-                            // console.log('<', data.length, 0, j - markStart, String.fromCharCode(...data))
-                        }
-                    }
-                    markStart = -1
-                } else if (c != TERD_MARKER.charCodeAt(cursor)) {
-                    markStart = -1
-                }
-            }
-        }
-        this.writeOutput(iconv.decode(Buffer.from(data), 'gbk'))
-    }
-
-    public kill() {
-        this.proc.kill()
-    }
-}
-
-export class UserInterface {
-
-    private terd: Terd
-
-    start() {
-        // output banner
-        this.write(this.loadBanner())
-
-        this.terd = new Terd(this.write.bind(this),
-            () => {
-                this.write('\r\n')
-                process.exit()
-            })
-        process.stdin.setEncoding('utf8')
-        process.stdout.setEncoding('utf8')
-
-        // watch input
-        process.stdin.on('data', (data) => this.terd.process(data))
-    }
-
-    loadBanner() {
-        let lines = fs.readFileSync(path.resolve(__dirname, 'banner.txt')).toString().split('\r\n')
-            .map((line) => chalk.greenBright(line))
-        // lines[lines.length - 4] += chalk.redBright(PackageInfo.version)
-        lines[lines.length - 4] += chalk.redBright('v' + PackageInfo.version)
-        lines[lines.length - 3] += chalk.blueBright('by ' + PackageInfo.author)
-        lines[lines.length - 2] += chalk.whiteBright(chalk.underline(PackageInfo.homepage))
-        return lines.join('\r\n') + '\r\n'
-    }
-
-    write(buffer: Uint8Array | string, cb?: (err?: Error) => void): boolean {
-        return process.stdout.write(buffer, cb)
-    }
+  protected searchCommand(input: string): string[] {
+    return searchCommand(input);
+  }
 }

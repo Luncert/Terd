@@ -2,11 +2,17 @@
   "name": "terd",
   "version": "1.0.0",
   "description": "",
+  "types": "./typings/terd.d.ts",
   "main": "dist/index.js",
+  "files": [
+    "src/",
+    "res/"
+  ],
   "scripts": {
     "watch": "webpack --watch",
-    "build": "webpack --config webpack.config.js",
-    "start": "node dist/index.js"
+    "build": "npm run antlr && webpack --config webpack.config.js",
+    "start": "node dist/index.js",
+    "antlr": "antlr4ts -visitor src/grammar/Terd.g4"
   },
   "repository": {
     "type": "git",
@@ -20,16 +26,25 @@
   "homepage": "https://github.com/Luncert/Terd",
   "devDependencies": {
     "@types/chalk": "^2.2.0",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^13.1.8",
+    "@typescript-eslint/eslint-plugin": "^5.61.0",
+    "@typescript-eslint/parser": "^5.61.0",
+    "antlr4ts-cli": "^0.5.0-alpha.4",
     "copy-webpack-plugin": "^5.1.1",
+    "eslint": "^8.44.0",
+    "mocha": "^10.2.0",
     "node-loader": "^0.6.0",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.5",
     "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
+    "webpack-cli": "^3.3.10",
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
+    "antlr4ts": "^0.5.0-alpha.4",
     "chalk": "^3.0.0",
-    "iconv-lite": "^0.5.1"
+    "iconv-lite": "^0.5.1",
+    "node-pty": "^1.0.0"
   }
 }
