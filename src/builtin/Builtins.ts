@@ -5,6 +5,7 @@ import CommandContext from "./CommandContext";
 import { InvalidUsageError } from "./Errors";
 import fs from 'fs';
 import NTreeNode from "../lib/NTree";
+import { ASCII, CSI } from "../ASCII";
 
 class CommandNode extends NTreeNode<number> {
 
@@ -65,7 +66,16 @@ add('pwd', 'Print pwd.')
   .action((ctx, cmd) => {
     ctx.println(ctx.pwd);
     return 0;
-  })
+  });
+add('cls', 'Clear screen.', option('reset', 'r', null, 'reset terminal'))
+  .action((ctx, cmd) => {
+    // if (cmd.hasOption('reset')) {
+    //   ctx.print(ASCII.Reset);
+    // } else {
+    //   ctx.print(ASCII.ClearScreen);
+    // }
+    return 0;
+  });
 // console.log(cmdSearchTree.toString());
 
 export function searchCommand(input: string): string[] {

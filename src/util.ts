@@ -28,3 +28,12 @@ export function printParseTree(tree: Tree, ruleNames: string[]) {
   }
   console.log(process(tree));
 }
+
+export function removePrefix(c: string, s: string): string {
+  for (let i = 0; i < s.length; i++) {
+    if (s !== c) {
+      return s.substring(i + 1);
+    }
+  }
+  return s;
+}

@@ -52,7 +52,7 @@ export default abstract class NTreeNode<T> {
   }
 
   public toString(indent: number = 0): string {
-    let s = '  '.repeat(indent++) + '- ' + this.key + '\n';
+    let s = '  '.repeat(indent++) + '- ' + String.fromCharCode(this.key) + '\n';
     for (const c of this.children) {
       s += c.toString(indent);
     }

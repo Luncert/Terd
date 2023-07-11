@@ -41,6 +41,8 @@ export const ASCII = {
   Down: `${CODE_CSI}\x42`,
   Backward: `${CODE_CSI}\x44`,
   Forward: `${CODE_CSI}\x43`,
+  ClearScreen: `${CODE_CSI}2J${CODE_CSI}H`,
+  Reset: `\x1bc`
 };
 
 function stringWithCondition(condition: any, s: string) {

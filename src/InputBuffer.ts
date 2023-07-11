@@ -99,8 +99,8 @@ export default class InputBuffer {
     for (let i = 0; i < s.length; i++) {
       this.buf[i] = mapper(s[i]);
     }
-    this.spliceText(0, ...this.buf);
     this.cursor = this.buf.length;
+    this.replaceText(this.buf);
   }
 
   @rerender()
@@ -116,7 +116,7 @@ export default class InputBuffer {
   clear() {
     this.cursor = 0;
     this.buf = [];
-    this.text = [];
+    this.replaceText(this.buf);
   }
 
   @rerender()
@@ -281,6 +281,14 @@ export default class InputBuffer {
       pos: textCursor,
       deleted: textDeleteCount,
       added: toAdd,
+    };
+  }
+
+  private replaceText(buf: number[]) {
+    this.textChanges = {
+      pos: 0,
+      deleted: this.text.length,
+      added: buf,
     };
   }
 

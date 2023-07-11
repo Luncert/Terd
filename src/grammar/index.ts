@@ -3,7 +3,7 @@ import { TerdLexer } from "./TerdLexer";
 import { ArgumentContext, ArgumentsContext, CommandContext, ExecutableContext, OptionContext, TerdParser } from "./TerdParser";
 import { TerdListener } from "./TerdListener";
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker';
-import { printTokens } from "../util";
+import { printTokens, removePrefix } from "../util";
 
 export class Command {
 
@@ -13,6 +13,36 @@ export class Command {
     readonly argsString: string,
     readonly args: string[],
   ) {
+  }
+
+  getOptions() {
+    return new Options(this.args);
+  }
+}
+
+export class Options {
+
+  private options = new Map<string, string | boolean>();
+
+  constructor(args: string[]) {
+    // let i = 0;
+    // let name;
+    // while (i < args.length) {
+    //   if (args[i].startsWith('-')) {
+    //     if (name) {
+    //       this.options.set(name, true);
+    //     }
+    //     name = removePrefix('-', args[i]);
+    //   } else if (name) {
+
+    //   }
+    //   i++;
+    // }
+
+  }
+
+  get<T>(key: string): T {
+    return this.options.get(key) as T;
   }
 }
 

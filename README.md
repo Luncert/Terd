@@ -4,4 +4,3 @@
 
 - auto completion:
   - pw?
-- history: ls, s

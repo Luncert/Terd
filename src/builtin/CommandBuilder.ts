@@ -2,6 +2,7 @@ import { Command } from "../grammar";
 import CommandContext from "./CommandContext";
 
 interface OptionDef {
+  key: string;
   short: string;
   long: string;
   description: string;
@@ -57,6 +58,6 @@ export function argument(name: string): ArgumentDef {
   return { name };
 }
 
-export function option(short: string, long: string, description: string) {
-  return { short, long, description };
+export function option(key: string, short: string, long?: string, description?: string) {
+  return { key, short, long, description };
 }
