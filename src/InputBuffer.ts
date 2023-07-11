@@ -67,7 +67,7 @@ export default class InputBuffer {
     for (; i >= 0 && !isWhitespace(this.buf[i]); i--) {
     }
 
-    return this.toString(i);
+    return this.toString(i + 1);
   }
 
   hasInput() {

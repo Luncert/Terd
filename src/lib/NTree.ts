@@ -1,14 +1,16 @@
-export default abstract class NTreeNode<T> {
+export default abstract class NTreeNode < T > {
 
   protected key: T;
-  private children: NTreeNode<T>[];
+  private children: NTreeNode < T > [];
 
   constructor(key: T) {
-      this.key = key;
-      this.children = [];
+    this.key = key;
+    this.children = [];
   }
 
-  public getKey(): T { return this.key; }
+  public getKey(): T {
+    return this.key;
+  }
 
   public getChildren() {
     return this.children;
@@ -16,43 +18,42 @@ export default abstract class NTreeNode<T> {
 
   public abstract match(key: T): boolean;
 
-  public matchChild(key: T): NTreeNode<T> {
-      let i = this.searchChild(key);
-      return i < this.children.length ? this.children[i] : null;
+  public matchChild(key: T): NTreeNode < T > {
+    let i = this.searchChild(key);
+    return i < this.children.length ? this.children[i] : null;
   }
 
   private searchChild(key: T): number {
-      let i = 0;
-      for (; i < this.children.length; i++) {
-          if (this.children[i].match(key)) {
-              return i;
-          }
+    let i = 0;
+    for (; i < this.children.length; i++) {
+      if (this.children[i].match(key)) {
+        return i;
       }
-      return i;
+    }
+    return i;
   }
 
-  public addChild(child: NTreeNode<T>) {
-      this.children.push(child);
+  public addChild(child: NTreeNode < T > ) {
+    this.children.push(child);
   }
 
-  public removeChild(key: T): NTreeNode<T> {
-      let i = this.searchChild(key);
-      return this.removeChildByIndex(i);
+  public removeChild(key: T): NTreeNode < T > {
+    let i = this.searchChild(key);
+    return this.removeChildByIndex(i);
   }
 
-  public removeChildByIndex(i: number): NTreeNode<T> {
-      if (i >= 0 && i < this.children.length) {
-          return this.children.splice(i, 1)[0];
-      }
-      else return null;
+  public removeChildByIndex(i: number): NTreeNode < T > {
+    if (i >= 0 && i < this.children.length) {
+      return this.children.splice(i, 1)[0];
+    } else return null;
   }
 
   public getChildrenNum(): number {
-      return this.children.length;
+    return this.children.length;
   }
 
   public toString(indent: number = 0): string {
-    let s = '  '.repeat(indent++) + '- ' + String.fromCharCode(this.key) + '\n';
+    let s = '  '.repeat(indent++) + '- ' + this.key + '\n';
     for (const c of this.children) {
       s += c.toString(indent);
     }
